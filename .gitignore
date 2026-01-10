@@ -1,0 +1,5 @@
+3rdparty/*
+.vscode
+*.o
+cbc
+/*.bean
