@@ -7,6 +7,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+#include "ast.h"
+#include "parser.h"
 #include <stdio.h>
 #define _POSIX_C_SOURCE 200809L
 #define _GNU_SOURCE
@@ -18,7 +20,9 @@
 #include "a_vector.h"
 #include "common.h"
 #include "lexer.h"
-#include "lexertypes.h"
+
+#define _UTIL_H_IMPLEMENTATION
+#include "util.h"
 
 // #include "tests/ast_printer.c"
 
@@ -47,6 +51,19 @@ i32 main(i32 argc, char** argv) {
     Lexer l = lx_new(s.data, s.len);
     Tokens toks = lx_tokenize(&l);
 
+    if (!toks.len)
+        goto end;
+
+    Parser ps = ps_new(toks.data, toks.len, as_dupe(&filename));
+    if (!ps_next_expr(&ps)) {
+        eprintf("error\n");
+    } else {
+        eprintf("ok\n");
+    }
+    cb_expr_free(&ps.expr);
+
+end:
+    ps_free(&ps);
     for (usize i = 0; i < toks.len; i++) {
         token_free(&toks.data[i]);
     }

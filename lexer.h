@@ -19,7 +19,7 @@
 AV_DECL(Token, Tokens)
 
 Token token_new_ident(const char* str);
-a_string token_kind_to_string(TokenKind k);
+const char* token_kind_string(TokenKind k);
 void token_print_long(Token* t);
 void token_print(Token* t);
 Token token_dupe(Token* t);

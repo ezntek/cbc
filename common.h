@@ -131,22 +131,30 @@ typedef double f64;
 #define dupe_slice(T, ident, orig, count)                                      \
     T* ident = NULL;                                                           \
     do {                                                                       \
-        (ident) = calloc(sizeof(T), (count));                                  \
+        (ident) = calloc((count), sizeof(T));                                  \
         check_alloc((ident));                                                  \
         memcpy((ident), (orig), (count));                                      \
     } while (0)
 
 #define if_let(type, id, expr)                                                 \
-    type id;                                                                   \
-    if ((id = (expr).data, (expr)).have)
+    for (typeof(expr) _if_let_temp = (expr); _if_let_temp.have;                \
+         _if_let_temp.have = 0)                                                \
+        for (type id = _if_let_temp.data; _if_let_temp.have;                   \
+             _if_let_temp.have = 0)                                            \
+            if (1)
 
 #define let_else(type, id, expr)                                               \
-    type id;                                                                   \
-    if (!(id = (expr).data, (expr)).have)
+    for (typeof(expr) _let_else_temp = (expr); !_let_else_temp.have;           \
+         _let_else_temp.have = 1)                                              \
+        for (type id = _let_else_temp.data; !_let_else_temp.have;              \
+             _let_else_temp.have = 1)                                          \
+            if (1)
 
 #define while_let(type, id, expr)                                              \
-    type id;                                                                   \
-    while ((id = (expr).data, (expr)).have)
+    for (typeof(expr) _while_let_temp = (expr); _while_let_temp.have;          \
+         _while_let_temp = (expr))                                             \
+        for (type id = _while_let_temp.data; _while_let_temp.have;             \
+             _while_let_temp.have = 0)
 
 #define let(id, expr) ((id = (expr).data, (expr)).have)
 

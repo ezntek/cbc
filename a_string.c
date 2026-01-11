@@ -6,6 +6,7 @@
  * This source code form is licensed under the MIT/Expat license.
  * Visit the OSI website for a digital version.
  */
+#include <assert.h>
 #define _POSIX_C_SOURCE 200809L
 
 #include <ctype.h>
@@ -89,7 +90,7 @@ void as_ncopy(a_string* dest, const a_string* src, usize chars) {
     }
     as_clear(dest);
 
-    stpncpy(dest->data, src->data, chars);
+    strncpy(dest->data, src->data, chars);
     dest->len = chars;
 }
 
@@ -104,7 +105,7 @@ void as_ncopy_cstr(a_string* dest, const char* src, usize chars) {
     }
     as_clear(dest);
 
-    stpncpy(dest->data, src, chars);
+    strncpy(dest->data, src, chars);
     dest->len = chars;
 }
 
@@ -326,37 +327,6 @@ char as_pop(a_string* s) {
     char last = s->data[--s->len];
     s->data[s->len] = '\0';
     return last;
-}
-
-char as_at(const a_string* s, usize idx) {
-    if (!as_valid(s))
-        panic("cannot operate on an invalid a_string!");
-
-    if (idx >= s->len)
-        panic("a_string index `%zu` out of range (length: `%zu`)!", idx,
-              s->len);
-
-    return s->data[idx];
-}
-
-char as_first(const a_string* s) {
-    if (!as_valid(s))
-        panic("cannot operate on an invalid a_string!");
-
-    if (s->len == 0)
-        panic("cannot get the first character of an empty a_string!");
-
-    return s->data[0];
-}
-
-char as_last(const a_string* s) {
-    if (!as_valid(s))
-        panic("cannot operate on an invalid a_string!");
-
-    if (s->len == 0)
-        panic("cannot get the last character of an empty a_string!");
-
-    return s->data[s->len - 1];
 }
 
 a_string as_trim_left(const a_string* s) {
@@ -651,4 +621,33 @@ usize as_to_integer(const a_string* src, int64_t* res, int base) {
     } else {
         return diff;
     }
+}
+
+bool as_is_upper(const a_string* s) {
+    for (usize i = 0; i < s->len; i++) {
+        if (!isupper(as_at(s, i)))
+            return false;
+    }
+    return true;
+}
+
+bool as_is_lower(const a_string* s) {
+    for (usize i = 0; i < s->len; i++) {
+        if (!islower(as_at(s, i)))
+            return false;
+    }
+    return true;
+}
+
+bool as_is_case_consistent(const a_string* s) {
+    if (!s->len)
+        return true;
+
+    bool upper = isupper(as_first(s));
+    for (usize i = 0; i < s->len; i++) {
+        if (isupper(as_at(s, i)) != upper)
+            return false;
+    }
+
+    return true;
 }

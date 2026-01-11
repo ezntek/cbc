@@ -19,6 +19,12 @@
 #define as_fmt(s)  (int)((s).len), ((s).data)
 #define as_fmtp(s) (int)((s)->len), ((s)->data)
 
+#define as_last(s) ((s)->data[(assert((s)->len > 0), (s)->len - 1)])
+
+#define as_first(s) ((s)->data[(assert((s)->len > 0), 0)])
+
+#define as_at(s, pos) ((s)->data[(assert(pos < (s)->len), pos)])
+
 /**
  * null terminated, heap-allocated string slice.
  */
@@ -290,30 +296,6 @@ void as_append(a_string* s, const char* n);
 char as_pop(a_string* s);
 
 /**
- * gets the nth character from an a_string.
- *
- * @param s the target string
- * @return the last character
- */
-char as_at(const a_string* s, usize idx);
-
-/**
- * gets the first character from an a_string.
- *
- * @param s the target string
- * @return the last character
- */
-char as_first(const a_string* s);
-
-/**
- * gets the last character from an a_string.
- *
- * @param s the target string
- * @return the last character
- */
-char as_last(const a_string* s);
-
-/**
  * removes all whitespace characters from the left side of an a_string.
  *
  * @param s the string
@@ -489,5 +471,9 @@ usize as_to_double(const a_string* src, double* res);
  * the string, the conversion is successful. returns ERANGE on a range error.
  */
 usize as_to_integer(const a_string* src, int64_t* res, int base);
+
+bool as_is_upper(const a_string* s);
+bool as_is_lower(const a_string* s);
+bool as_is_case_consistent(const a_string* s);
 
 #endif // _A_STRING_H

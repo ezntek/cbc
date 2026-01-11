@@ -7,7 +7,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include "lexertypes.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <ctype.h>
@@ -19,6 +18,7 @@
 #include "a_string.h"
 #include "common.h"
 #include "lexer.h"
+#include "lexertypes.h"
 
 #define CUR  (l->src[l->cur])
 #define PEEK (l->src[l->cur + 1])
@@ -76,6 +76,88 @@
 
 static char ERROR_BUF[ERROR_BUFSZ] = {0};
 
+static const char* TOKEN_STRINGS[] = {
+    [TOK_IDENT] = "ident",
+    [TOK_EOF] = "eof",
+    [TOK_INVALID] = "invalid",
+    [TOK_NEWLINE] = "newline",
+    [TOK_LITERAL_STRING] = "literal_string",
+    [TOK_LITERAL_CHAR] = "literal_char",
+    [TOK_LITERAL_NUMBER] = "literal_number",
+    [TOK_LITERAL_BOOLEAN] = "literal_boolean",
+    [TOK_DECLARE] = "DECLARE",
+    [TOK_CONSTANT] = "CONSTANT",
+    [TOK_OUTPUT] = "OUTPUT",
+    [TOK_INPUT] = "INPUT",
+    [TOK_AND] = "AND",
+    [TOK_OR] = "OR",
+    [TOK_NOT] = "NOT",
+    [TOK_IF] = "IF",
+    [TOK_THEN] = "THEN",
+    [TOK_ELSE] = "ELSE",
+    [TOK_ENDIF] = "ENDIF",
+    [TOK_CASE] = "CASE",
+    [TOK_OF] = "OF",
+    [TOK_OTHERWISE] = "OTHERWISE",
+    [TOK_ENDCASE] = "ENDCASE",
+    [TOK_WHILE] = "WHILE",
+    [TOK_DO] = "DO",
+    [TOK_ENDWHILE] = "ENDWHILE",
+    [TOK_FOR] = "FOR",
+    [TOK_TO] = "TO",
+    [TOK_STEP] = "STEP",
+    [TOK_NEXT] = "NEXT",
+    [TOK_FUNCTION] = "FUNCTION",
+    [TOK_RETURNS] = "RETURNS",
+    [TOK_ENDFUNCTION] = "ENDFUNCTION",
+    [TOK_PROCEDURE] = "PROCEDURE",
+    [TOK_ENDPROCEDURE] = "ENDPROCEDURE",
+    [TOK_RETURN] = "RETURN",
+    [TOK_INCLUDE] = "INCLUDE",
+    [TOK_EXPORT] = "EXPORT",
+    [TOK_BREAK] = "BREAK",
+    [TOK_CONTINUE] = "CONTINUE",
+    [TOK_REPEAT] = "REPEAT",
+    [TOK_UNTIL] = "UNTIL",
+    [TOK_STRUCT] = "STRUCT",
+    [TOK_ENDSTRUCT] = "ENDSTRUCT",
+    [TOK_INTEGER] = "INTEGER",
+    [TOK_REAL] = "REAL",
+    [TOK_BOOLEAN] = "BOOLEAN",
+    [TOK_STRING] = "STRING",
+    [TOK_CHAR] = "CHAR",
+    [TOK_NULL] = "NULL",
+    [TOK_LPAREN] = "lparen",
+    [TOK_RPAREN] = "rparen",
+    [TOK_LBRACKET] = "lbracket",
+    [TOK_RBRACKET] = "rbracket",
+    [TOK_LCURLY] = "lcurly",
+    [TOK_RCURLY] = "rcurly",
+    [TOK_COMMA] = "comma",
+    [TOK_COLON] = "colon",
+    [TOK_SEMICOLON] = "semicolon",
+    [TOK_ADD] = "add",
+    [TOK_SUB] = "sub",
+    [TOK_MUL] = "mul",
+    [TOK_DIV] = "div",
+    [TOK_PERCENT] = "percent",
+    [TOK_CARET] = "caret",
+    [TOK_TILDE] = "tilde",
+    [TOK_LT] = "lt",
+    [TOK_GT] = "gt",
+    [TOK_LEQ] = "leq",
+    [TOK_GEQ] = "geq",
+    [TOK_EQ] = "eq",
+    [TOK_NEQ] = "neq",
+    [TOK_ASSIGN] = "assign",
+    [TOK_SHR] = "shr",
+    [TOK_SHL] = "shl",
+    [TOK_BITOR] = "bitor",
+    [TOK_BITAND] = "bitand",
+    [TOK_BITNOT] = "bitnot",
+    [TOK_BITXOR] = "bitxor",
+};
+
 Token token_new_ident(const char* str) {
     a_string s = astr(str);
     return (Token){
@@ -106,92 +188,11 @@ Token token_dupe(Token* t) {
     return new;
 }
 
-a_string token_kind_to_string(TokenKind k) {
-    static const char* TOKEN_STRINGS[] = {
-        [TOK_IDENT] = "ident",
-        [TOK_EOF] = "eof",
-        [TOK_INVALID] = "invalid",
-        [TOK_NEWLINE] = "newline",
-        [TOK_LITERAL_STRING] = "literal_string",
-        [TOK_LITERAL_CHAR] = "literal_char",
-        [TOK_LITERAL_NUMBER] = "literal_number",
-        [TOK_LITERAL_BOOLEAN] = "literal_boolean",
-        [TOK_DECLARE] = "DECLARE",
-        [TOK_CONSTANT] = "CONSTANT",
-        [TOK_OUTPUT] = "OUTPUT",
-        [TOK_INPUT] = "INPUT",
-        [TOK_AND] = "AND",
-        [TOK_OR] = "OR",
-        [TOK_NOT] = "NOT",
-        [TOK_IF] = "IF",
-        [TOK_THEN] = "THEN",
-        [TOK_ELSE] = "ELSE",
-        [TOK_ENDIF] = "ENDIF",
-        [TOK_CASE] = "CASE",
-        [TOK_OF] = "OF",
-        [TOK_OTHERWISE] = "OTHERWISE",
-        [TOK_ENDCASE] = "ENDCASE",
-        [TOK_WHILE] = "WHILE",
-        [TOK_DO] = "DO",
-        [TOK_ENDWHILE] = "ENDWHILE",
-        [TOK_FOR] = "FOR",
-        [TOK_TO] = "TO",
-        [TOK_STEP] = "STEP",
-        [TOK_NEXT] = "NEXT",
-        [TOK_FUNCTION] = "FUNCTION",
-        [TOK_RETURNS] = "RETURNS",
-        [TOK_ENDFUNCTION] = "ENDFUNCTION",
-        [TOK_PROCEDURE] = "PROCEDURE",
-        [TOK_ENDPROCEDURE] = "ENDPROCEDURE",
-        [TOK_RETURN] = "RETURN",
-        [TOK_INCLUDE] = "INCLUDE",
-        [TOK_EXPORT] = "EXPORT",
-        [TOK_BREAK] = "BREAK",
-        [TOK_CONTINUE] = "CONTINUE",
-        [TOK_REPEAT] = "REPEAT",
-        [TOK_UNTIL] = "UNTIL",
-        [TOK_STRUCT] = "STRUCT",
-        [TOK_ENDSTRUCT] = "ENDSTRUCT",
-        [TOK_INTEGER] = "INTEGER",
-        [TOK_REAL] = "REAL",
-        [TOK_BOOLEAN] = "BOOLEAN",
-        [TOK_STRING] = "STRING",
-        [TOK_CHAR] = "CHAR",
-        [TOK_NULL] = "NULL",
-        [TOK_LPAREN] = "lparen",
-        [TOK_RPAREN] = "rparen",
-        [TOK_LBRACKET] = "lbracket",
-        [TOK_RBRACKET] = "rbracket",
-        [TOK_LCURLY] = "lcurly",
-        [TOK_RCURLY] = "rcurly",
-        [TOK_COMMA] = "comma",
-        [TOK_COLON] = "colon",
-        [TOK_SEMICOLON] = "semicolon",
-        [TOK_ADD] = "add",
-        [TOK_SUB] = "sub",
-        [TOK_MUL] = "mul",
-        [TOK_DIV] = "div",
-        [TOK_PERCENT] = "percent",
-        [TOK_CARET] = "caret",
-        [TOK_TILDE] = "tilde",
-        [TOK_LT] = "lt",
-        [TOK_GT] = "gt",
-        [TOK_LEQ] = "leq",
-        [TOK_GEQ] = "geq",
-        [TOK_EQ] = "eq",
-        [TOK_NEQ] = "neq",
-        [TOK_ASSIGN] = "assign",
-        [TOK_SHR] = "shr",
-        [TOK_SHL] = "shl",
-        [TOK_BITOR] = "bitor",
-        [TOK_BITAND] = "bitand",
-        [TOK_BITNOT] = "bitnot",
-        [TOK_BITXOR] = "bitxor",
-    };
+const char* token_kind_string(TokenKind k) {
     if ((i32)k < 0 || (i32)k > LENGTH(TOKEN_STRINGS))
         panic("invalid token kind");
-    const char* res = TOKEN_STRINGS[k];
-    return astr(res);
+
+    return TOKEN_STRINGS[k];
 }
 
 void token_print_long(Token* t) {
@@ -224,9 +225,8 @@ void token_print_long(Token* t) {
 }
 
 void token_print(Token* t) {
-    a_string s = token_kind_to_string(t->kind);
-    printf("<%.*s>", (int)s.len, s.data);
-    as_free(&s);
+    const char* s = token_kind_string(t->kind);
+    printf("<%s>", s);
 }
 
 // lexer stuff
@@ -510,6 +510,10 @@ static bool lx_next_keyword(Lexer* l, const a_string* word) {
         return false;
 
     TokenKind kw;
+
+    if (!as_is_case_consistent(word))
+        return false;
+
     a_string word_lower = as_tolower(word);
     if ((kw = lx_kwt_get(word_lower.data)) != TOK_INVALID) {
         l->token = TOKEN(kw, word_lower.len);

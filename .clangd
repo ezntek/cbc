@@ -1,5 +1,24 @@
 If:
- PathMatch: .*.h
+  PathMatch: .*\.h
 CompileFlags:
- Add: [ -xc-header ]
-
+  Add: [-xc-header ]
+---
+If:
+  PathMatch: util.h
+CompileFlags:
+  Add: [-D_UTIL_H_IMPLEMENTATION]
+---
+If:
+  PathMatch: .*\.c
+CompileFlags:
+  Add: [-xc]
+---
+If:
+  PathMatch: [.*\.hh, .*\.hpp] 
+CompileFlags:
+  Add: [-std=c++23, -xc++-header]
+---
+If:
+  PathMatch: [.*\.cc, .*\.cpp]
+CompileFlags:
+  Add: [-std=c++23, -xc++]

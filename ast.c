@@ -7,6 +7,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+#define _POSIX_C_SOURCE 200809L
 
 #include "ast.h"
 #include "a_string.h"
@@ -34,20 +35,20 @@ CB_Value cb_value_new_null() {
 CB_Value cb_value_new_integer(i64 integer) {
     return (CB_Value){
         .kind = CB_PRIM_INTEGER,
-        integer,
+        .integer = integer,
     };
 }
 
 CB_Value cb_value_new_real(f64 real) {
-    return (CB_Value){.kind = CB_PRIM_REAL, real};
+    return (CB_Value){.kind = CB_PRIM_REAL, .real = real};
 }
 
 CB_Value cb_value_new_boolean(bool boolean) {
-    return (CB_Value){.kind = CB_PRIM_BOOLEAN, boolean};
+    return (CB_Value){.kind = CB_PRIM_BOOLEAN, .boolean = boolean};
 }
 
 CB_Value cb_value_new_char(char chr) {
-    return (CB_Value){.kind = CB_PRIM_CHAR, chr};
+    return (CB_Value){.kind = CB_PRIM_CHAR, .chr = chr};
 }
 
 CB_Value cb_value_new_string(a_string s) {
@@ -68,29 +69,31 @@ void cb_value_free(CB_Value* v) {
     }
 }
 
-CB_Expr cb_expr_new_literal(CB_Value v) {
+CB_Expr cb_expr_new_literal(Pos pos, CB_Value v) {
     return (CB_Expr){
         .kind = CB_EXPR_LIT,
+        .pos = pos,
         .lit = v,
     };
 }
 
-CB_Expr cb_expr_new_ident(a_string s) {
+CB_Expr cb_expr_new_ident(Pos pos, a_string s) {
     return (CB_Expr){
         .kind = CB_EXPR_IDENT,
+        .pos = pos,
         .ident = as_dupe(&s),
     };
 }
 
-CB_Expr cb_expr_new_unary(CB_ExprKind k, CB_Expr operand) {
+CB_Expr cb_expr_new_unary(Pos pos, CB_ExprKind k, CB_Expr operand) {
     dupe(CB_Expr, n, operand);
-    return (CB_Expr){k, .unary = n};
+    return (CB_Expr){k, .pos = pos, .unary = n};
 }
 
-CB_Expr cb_expr_new_binary(CB_ExprKind k, CB_Expr lhs, CB_Expr rhs) {
+CB_Expr cb_expr_new_binary(Pos pos, CB_ExprKind k, CB_Expr lhs, CB_Expr rhs) {
     dupe(CB_Expr, nlhs, lhs);
     dupe(CB_Expr, nrhs, rhs);
-    return (CB_Expr){k, .lhs = nlhs, .rhs = nrhs};
+    return (CB_Expr){k, .pos = pos, .lhs = nlhs, .rhs = nrhs};
 }
 
 void cb_expr_free(CB_Expr* e) {
@@ -135,16 +138,16 @@ void cb_input_stmt_free(CB_InputStmt* s) {
     free(s->target);
 }
 
-CB_Stmt cb_stmt_new_expr(CB_Expr expr) {
-    return (CB_Stmt){CB_STMT_EXPR, .expr = expr};
+CB_Stmt cb_stmt_new_expr(Pos pos, CB_Expr expr) {
+    return (CB_Stmt){CB_STMT_EXPR, pos, .expr = expr};
 }
 
-CB_Stmt cb_stmt_new_output(CB_OutputStmt output) {
-    return (CB_Stmt){CB_STMT_OUTPUT, .output = output};
+CB_Stmt cb_stmt_new_output(Pos pos, CB_OutputStmt output) {
+    return (CB_Stmt){CB_STMT_OUTPUT, pos, .output = output};
 }
 
-CB_Stmt cb_stmt_new_input(CB_InputStmt input) {
-    return (CB_Stmt){CB_STMT_OUTPUT, .input = input};
+CB_Stmt cb_stmt_new_input(Pos pos, CB_InputStmt input) {
+    return (CB_Stmt){CB_STMT_OUTPUT, pos, .input = input};
 }
 
 void cb_stmt_free(CB_Stmt* s) {

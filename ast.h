@@ -11,8 +11,11 @@
 #ifndef _AST_H
 #define _AST_H
 
+#include <stdbool.h>
+
 #include "a_string.h"
 #include "common.h"
+#include "lexertypes.h"
 
 typedef enum {
     CB_PRIM_NULL = 0,
@@ -94,6 +97,7 @@ typedef enum {
 typedef struct CB_Expr CB_Expr;
 typedef struct CB_Expr {
     CB_ExprKind kind;
+    Pos pos;
     union {
         CB_Value lit;
         a_string ident;
@@ -105,10 +109,10 @@ typedef struct CB_Expr {
     };
 } CB_Expr;
 
-CB_Expr cb_expr_new_literal(CB_Value v);
-CB_Expr cb_expr_new_ident(a_string s);
-CB_Expr cb_expr_new_unary(CB_ExprKind k, CB_Expr operand);
-CB_Expr cb_expr_new_binary(CB_ExprKind k, CB_Expr lhs, CB_Expr rhs);
+CB_Expr cb_expr_new_literal(Pos pos, CB_Value v);
+CB_Expr cb_expr_new_ident(Pos pos, a_string s);
+CB_Expr cb_expr_new_unary(Pos pos, CB_ExprKind k, CB_Expr operand);
+CB_Expr cb_expr_new_binary(Pos pos, CB_ExprKind k, CB_Expr lhs, CB_Expr rhs);
 void cb_expr_free(CB_Expr* e);
 
 typedef enum {
@@ -136,6 +140,7 @@ void cb_input_stmt_free(CB_InputStmt* s);
 
 typedef struct {
     CB_StmtKind kind;
+    Pos pos;
     union {
         CB_Expr expr;
         CB_OutputStmt output;
@@ -143,9 +148,9 @@ typedef struct {
     };
 } CB_Stmt;
 
-CB_Stmt cb_stmt_new_expr(CB_Expr expr);
-CB_Stmt cb_stmt_new_output(CB_OutputStmt output);
-CB_Stmt cb_stmt_new_input(CB_InputStmt input);
+CB_Stmt cb_stmt_new_expr(Pos pos, CB_Expr expr);
+CB_Stmt cb_stmt_new_output(Pos pos, CB_OutputStmt output);
+CB_Stmt cb_stmt_new_input(Pos pos, CB_InputStmt input);
 void cb_stmt_free(CB_Stmt* s);
 
 #endif // _AST_H
