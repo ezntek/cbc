@@ -118,11 +118,22 @@ typedef double f64;
         eprintf(S_END "\n");                                                   \
     } while (0)
 
-#define make(T, ident, val)                                                    \
+// duplicates a value onto a new heap variable
+#define dupe(T, ident, val)                                                    \
+    T* ident = NULL;                                                           \
     do {                                                                       \
         (ident) = malloc(sizeof(T));                                           \
         check_alloc((ident));                                                  \
         *(ident) = (val);                                                      \
+    } while (0)
+
+// duplicates a slice onto the heap with length count
+#define dupe_slice(T, ident, orig, count)                                      \
+    T* ident = NULL;                                                           \
+    do {                                                                       \
+        (ident) = calloc(sizeof(T), (count));                                  \
+        check_alloc((ident));                                                  \
+        memcpy((ident), (orig), (count));                                      \
     } while (0)
 
 #define if_let(type, id, expr)                                                 \
