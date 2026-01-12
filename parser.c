@@ -50,11 +50,11 @@ static void ps_diag(Parser* ps, const char* format, ...);
 static void ps_diag_expected(Parser* ps, const char* thing);
 
 static MaybeToken ps_consume(Parser* ps) {
-    if (ps->cur + 1 >= ps->tokens_len) {
+    if (ps->cur < ps->tokens_len) {
+        return HAVE_TOKEN(&ps->tokens[ps->cur++]);
+    } else {
         ps->eof = true;
         return NO_TOKEN;
-    } else {
-        return HAVE_TOKEN(&ps->tokens[ps->cur++]);
     }
 }
 
@@ -199,6 +199,10 @@ static void ps_diag_expected(Parser* ps, const char* thing) {
 
 // actual parsing functions
 static bool ps_literal(Parser* ps);
+static bool ps_primary(Parser* ps);
+static bool ps_postfix(Parser* ps);
+static bool ps_unary(Parser* ps);
+static bool ps_binary(Parser* ps);
 
 static char resolve_escape(char ch) {
     switch (ch) {
@@ -273,7 +277,23 @@ static bool is_real(a_string* s) {
     return true;
 }
 
+static bool is_literal(TokenKind k) {
+    switch (k) {
+        case TOK_NULL:
+        case TOK_LITERAL_NUMBER:
+        case TOK_LITERAL_BOOLEAN:
+        case TOK_LITERAL_CHAR:
+        case TOK_LITERAL_STRING: return true;
+        default: return false;
+    }
+}
+
 static bool ps_literal(Parser* ps) {
+    MaybeToken peek = ps_peek(ps);
+    if (peek.have && !is_literal(peek.data->kind)) {
+        return false;
+    }
+
     let_else(Token*, t, ps_consume(ps)) {
         ps_diag_at(ps, t->pos, "failed to get next literal");
         return false;
@@ -398,30 +418,94 @@ static bool ps_literal(Parser* ps) {
             ps->expr = cb_expr_new_literal(t->pos, cb_value_new_char(ch));
             return true;
         } break;
-        default: {
-            ps_diag_at(ps, t->pos, "expected a literal, but found %s",
-                       token_kind_string(t->kind));
-            return false;
-        } break;
+        default: return false;
     }
 
     return false;
 }
 
-bool ps_primary(Parser* ps) {
+static bool ps_primary(Parser* ps) {
+    if (ps_check(ps, TOK_LPAREN)) {
+        Token* t = ps_consume(ps).data;
+        if (!ps_expr(ps)) {
+            diag_token(t, "invalid expression inside grouping");
+        }
+        ps->expr = cb_expr_new_unary(t->pos, CB_EXPR_GROUPING, ps->expr);
+        if (!ps_consume_and_expect(ps, TOK_RPAREN).have) {
+            return false; // XXX: are we sure we reported it?
+        }
+        return true;
+    }
+
+    if (ps_literal(ps)) {
+        return true;
+    } else {
+        if (ps->error_reported)
+            return false;
+    }
+
+    if (ps_check(ps, TOK_IDENT)) {
+        Token* p = ps_consume(ps).data;
+        ps->expr = cb_expr_new_ident(p->pos, p->data.string);
+        return true;
+    }
+
     return false;
 }
 
-bool ps_binary(Parser* ps) {
+static bool ps_postfix(Parser* ps) {
+    MaybeToken peek = ps_peek(ps);
+    if (!peek.have) {
+        return false;
+    }
+
+    if (!ps_primary(ps)) {
+        ps_diag_at(ps, peek.data->pos, "could not parse primary expression");
+        return false;
+    }
+
+    do {
+        if (ps_check(ps, TOK_CARET)) {
+            (void)ps_consume(ps);
+            ps->expr =
+                cb_expr_new_unary(ps_get_pos(ps), CB_EXPR_DEREF, ps->expr);
+        } // TODO: array index, function call
+        // we checked everything
+        else {
+            break;
+        }
+    } while (1);
+
+    return true;
+}
+
+static bool ps_unary(Parser* ps) {
+    if_let(Token*, t, ps_peek(ps)) {
+        switch (t->kind) {
+            case TOK_SUB: {
+                Pos p = ps_consume(ps).data->pos;
+                if (!ps_unary(ps))
+                    return false;
+                ps->expr = cb_expr_new_unary(p, CB_EXPR_NEGATION, ps->expr);
+            } break;
+            default: break;
+        }
+        // if we still have tokens to postfix
+        if (!ps->eof)
+            return ps_postfix(ps);
+        else // assume everything OK
+            return true;
+    }
+    // we probably hit EOF
     return false;
 }
 
-bool ps_unary(Parser* ps) {
-    return false;
+static bool ps_binary(Parser* ps) {
+    return ps_unary(ps);
 }
 
 bool ps_expr(Parser* ps) {
-    return ps_literal(ps);
+    return ps_binary(ps);
 }
 
 bool ps_stmt(Parser* ps) {
@@ -429,8 +513,11 @@ bool ps_stmt(Parser* ps) {
 }
 
 Parser ps_new(Token* tokens, usize tokens_len, a_string file_name) {
+    if (tokens_len < 1)
+        panic("invalid token length (missing EOF token)");
+
     return (Parser){
-        .tokens = tokens, .tokens_len = tokens_len, .file_name = file_name};
+        .tokens = tokens, .tokens_len = tokens_len - 1, .file_name = file_name};
 }
 
 void ps_free(Parser* ps) {

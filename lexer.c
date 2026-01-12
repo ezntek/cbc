@@ -682,8 +682,6 @@ Tokens lx_tokenize(Lexer* l) {
             lx_perror(l->error.kind, "\033[31;1mlexer error\033[0m");
             av_clear(&toks);
             goto end;
-        } else {
-            token_print_long(tok);
         }
 
         av_append(&toks, *tok);

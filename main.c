@@ -50,10 +50,19 @@ i32 main(i32 argc, char** argv) {
     if (!toks.len)
         goto end;
 
+    printf("\x1b[2m=== TOKENS ===\n");
+    for (usize i = 0; i < toks.len; i++) {
+        token_print_long(&toks.data[i]);
+    }
+    printf("==============\x1b[0m\n");
+
     Parser ps = ps_new(toks.data, toks.len, as_dupe(&filename));
+
     if (!ps_expr(&ps)) {
+        eprintf("error\n");
         goto end;
     }
+
     AstPrinter ap = ap_new();
     ap_visit_expr(&ap, &ps.expr);
     cb_expr_free(&ps.expr);
