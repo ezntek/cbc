@@ -276,6 +276,37 @@ bool as_valid(const a_string* s) {
     return !(s->len == (usize)-1 || s->cap == (usize)-1 || s->data == NULL);
 }
 
+char as_at(const a_string* s, usize idx) {
+    if (!as_valid(s))
+        panic("cannot operate on an invalid a_string!");
+
+    if (idx >= s->len)
+        panic("a_string index `%zu` out of range (length: `%zu`)!", idx,
+              s->len);
+
+    return s->data[idx];
+}
+
+char as_first(const a_string* s) {
+    if (!as_valid(s))
+        panic("cannot operate on an invalid a_string!");
+
+    if (s->len == 0)
+        panic("cannot get the first character of an empty a_string!");
+
+    return s->data[0];
+}
+
+char as_last(const a_string* s) {
+    if (!as_valid(s))
+        panic("cannot operate on an invalid a_string!");
+
+    if (s->len == 0)
+        panic("cannot get the last character of an empty a_string!");
+
+    return s->data[s->len - 1];
+}
+
 void as_append_char(a_string* s, char c) {
     if (!as_valid(s))
         panic("cannot operate on an invalid a_string!");

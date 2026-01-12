@@ -34,7 +34,7 @@ typedef struct {
 Parser ps_new(Token* toks, usize tokens_len, a_string file_name);
 void ps_free(Parser* ps);
 
-bool ps_next_expr(Parser* ps);
-bool ps_next_stmt(Parser* ps);
+bool ps_expr(Parser* ps);
+bool ps_stmt(Parser* ps);
 
 #endif // _PARSER_H

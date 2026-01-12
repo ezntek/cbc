@@ -7,20 +7,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include "a_string.h"
-#include "ast.h"
-#include "common.h"
-#include "lexer.h"
+#define _POSIX_C_SOURCE 200809L
+
 #include "lexertypes.h"
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <threads.h>
-#define _POSIX_C_SOURCE 200809L
-
 #include <stdbool.h>
+#include <stdio.h>
 
+#include "a_string.h"
+#include "ast.h"
+#include "common.h"
+#include "lexer.h"
 #include "parser.h"
 
 Parser parser_new(Tokens toks);
@@ -199,7 +198,7 @@ static void ps_diag_expected(Parser* ps, const char* thing) {
 #define diag_token(t, ...) ps_diag_at(ps, (t)->pos, __VA_ARGS__)
 
 // actual parsing functions
-static bool ps_next_literal(Parser* ps);
+static bool ps_literal(Parser* ps);
 
 static char resolve_escape(char ch) {
     switch (ch) {
@@ -274,7 +273,7 @@ static bool is_real(a_string* s) {
     return true;
 }
 
-static bool ps_next_literal(Parser* ps) {
+static bool ps_literal(Parser* ps) {
     let_else(Token*, t, ps_consume(ps)) {
         ps_diag_at(ps, t->pos, "failed to get next literal");
         return false;
@@ -409,6 +408,26 @@ static bool ps_next_literal(Parser* ps) {
     return false;
 }
 
+bool ps_primary(Parser* ps) {
+    return false;
+}
+
+bool ps_binary(Parser* ps) {
+    return false;
+}
+
+bool ps_unary(Parser* ps) {
+    return false;
+}
+
+bool ps_expr(Parser* ps) {
+    return ps_literal(ps);
+}
+
+bool ps_stmt(Parser* ps) {
+    return false;
+}
+
 Parser ps_new(Token* tokens, usize tokens_len, a_string file_name) {
     return (Parser){
         .tokens = tokens, .tokens_len = tokens_len, .file_name = file_name};
@@ -416,12 +435,4 @@ Parser ps_new(Token* tokens, usize tokens_len, a_string file_name) {
 
 void ps_free(Parser* ps) {
     as_free(&ps->file_name);
-}
-
-bool ps_next_expr(Parser* ps) {
-    return ps_next_literal(ps);
-}
-
-bool ps_next_stmt(Parser* ps) {
-    return false;
 }

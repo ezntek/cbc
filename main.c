@@ -7,24 +7,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#include "ast.h"
-#include "parser.h"
-#include <stdio.h>
+#include "ast_printer.h"
 #define _POSIX_C_SOURCE 200809L
-#define _GNU_SOURCE
 
 #include <errno.h>
-#include <string.h> // used by macro
 
 #include "a_string.h"
 #include "a_vector.h"
+#include "ast.h"
 #include "common.h"
 #include "lexer.h"
+#include "parser.h"
 
 #define _UTIL_H_IMPLEMENTATION
 #include "util.h"
-
-// #include "tests/ast_printer.c"
 
 i32 main(i32 argc, char** argv) {
     argv++;
@@ -55,12 +51,13 @@ i32 main(i32 argc, char** argv) {
         goto end;
 
     Parser ps = ps_new(toks.data, toks.len, as_dupe(&filename));
-    if (!ps_next_expr(&ps)) {
-        eprintf("error\n");
-    } else {
-        eprintf("ok\n");
+    if (!ps_expr(&ps)) {
+        goto end;
     }
+    AstPrinter ap = ap_new();
+    ap_visit_expr(&ap, &ps.expr);
     cb_expr_free(&ps.expr);
+    putchar('\n');
 
 end:
     ps_free(&ps);

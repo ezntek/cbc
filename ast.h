@@ -91,8 +91,8 @@ typedef enum {
     // TODO: add the rest
 } CB_ExprKind;
 
-#define cb_expr_kind_is_unary(k)  ((k) <= CB_EXPR_NEG && (k) <= CB_EXPR_FNCALL)
-#define cb_expr_kind_is_binary(k) ((k) <= CB_EXPR_ADD && (k) <= CB_EXPR_POW)
+#define cb_expr_kind_is_unary(k)  (CB_EXPR_NEG <= (k) && (k) <= CB_EXPR_FNCALL)
+#define cb_expr_kind_is_binary(k) (CB_EXPR_ADD <= (k) && (k) <= CB_EXPR_POW)
 
 typedef struct CB_Expr CB_Expr;
 typedef struct CB_Expr {

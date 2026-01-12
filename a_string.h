@@ -19,12 +19,6 @@
 #define as_fmt(s)  (int)((s).len), ((s).data)
 #define as_fmtp(s) (int)((s)->len), ((s)->data)
 
-#define as_last(s) ((s)->data[(assert((s)->len > 0), (s)->len - 1)])
-
-#define as_first(s) ((s)->data[(assert((s)->len > 0), 0)])
-
-#define as_at(s, pos) ((s)->data[(assert(pos < (s)->len), pos)])
-
 /**
  * null terminated, heap-allocated string slice.
  */
@@ -251,6 +245,30 @@ a_string as_input(const char* prompt);
  * @param s the string to be checked
  */
 bool as_valid(const a_string* s);
+
+/**
+ * gets the nth character from an a_string.
+ *
+ * @param s the target string
+ * @return the last character
+ */
+char as_at(const a_string* s, usize idx);
+
+/**
+ * gets the first character from an a_string.
+ *
+ * @param s the target string
+ * @return the last character
+ */
+char as_first(const a_string* s);
+
+/**
+ * gets the last character from an a_string.
+ *
+ * @param s the target string
+ * @return the last character
+ */
+char as_last(const a_string* s);
 
 /**
  * adds 1 character to an a_string
