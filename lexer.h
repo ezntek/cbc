@@ -14,7 +14,7 @@
 #include "a_vector.h"
 #include "common.h"
 
-#include "lexertypes.h"
+#include "lexer_types.h"
 
 AV_DECL(Token, Tokens)
 

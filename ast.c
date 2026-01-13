@@ -26,7 +26,7 @@ void cb_array_type_free(CB_ArrayType* at) {
     at->dims = NULL;
 }
 
-CB_Value cb_value_new_null() {
+CB_Value cb_value_new_null(void) {
     return (CB_Value){
         .kind = CB_PRIM_NULL,
     };

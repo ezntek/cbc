@@ -15,7 +15,7 @@
 
 #include "a_string.h"
 #include "common.h"
-#include "lexertypes.h"
+#include "lexer_types.h"
 
 typedef enum {
     CB_PRIM_NULL = 0,
@@ -65,7 +65,7 @@ typedef struct {
     };
 } CB_Value;
 
-CB_Value cb_value_new_null();
+CB_Value cb_value_new_null(void);
 CB_Value cb_value_new_integer(i64 integer);
 CB_Value cb_value_new_real(f64 real);
 CB_Value cb_value_new_boolean(bool boolean);

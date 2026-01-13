@@ -17,7 +17,7 @@
 #include "ast.h"
 #include "common.h"
 #include "lexer.h"
-#include "parser.h"
+#include "parser/parser.h"
 
 #define _UTIL_H_IMPLEMENTATION
 #include "util.h"

@@ -59,10 +59,12 @@ static const char* expr_kind_string(CB_ExprKind k) {
 }
 
 void ap_write_stdout(AstPrinter* p, const char* data) {
+    (void)p;
     printf("%s", data);
 }
 
 void ap_write_stderr(AstPrinter* p, const char* data) {
+    (void)p;
     eprintf("%s", data);
 }
 

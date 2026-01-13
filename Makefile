@@ -2,9 +2,9 @@ CC ?= cc
 LD ?= ld
 INCLUDE = 
 
-SRC = a_string.c lexer.c ast.c parser.c ast_printer.c
+SRC = a_string.c lexer.c ast.c ast_printer.c parser/parser.c parser/expr.c
 OBJ = $(SRC:.c=.o)
-HEADERS = common.h a_vector.h $(SRC:.c=.h)
+HEADERS = common.h a_vector.h a_string.h lexer.h ast.h ast_printer.h parser/parser.h
 
 RELEASE_CFLAGS = -O2 -Wall -Wextra -pedantic $(INCLUDE) 
 DEBUG_CFLAGS = -D_A_STRING_DEBUG -O0 -g -Wall -Wextra -pedantic -fno-stack-protector -fsanitize=address $(INCLUDE)

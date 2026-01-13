@@ -7,8 +7,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-#ifndef _LEXERTYPES_H
-#define _LEXERTYPES_H
+#ifndef _LEXER_TYPES_H
+#define _LEXER_TYPES_H
 
 #include "a_string.h"
 #include "common.h"
@@ -135,4 +135,4 @@ typedef struct {
     } data;
 } Token;
 
-#endif // _LEXERTYPES_H
+#endif // _LEXER_TYPES_H

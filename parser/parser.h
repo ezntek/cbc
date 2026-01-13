@@ -11,9 +11,9 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
-#include "ast.h"
-#include "common.h"
-#include "lexertypes.h"
+#include "../ast.h"
+#include "../common.h"
+#include "../lexer_types.h"
 
 #define MAX_ERROR_COUNT 20
 

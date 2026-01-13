@@ -18,7 +18,7 @@
 #include "a_string.h"
 #include "common.h"
 #include "lexer.h"
-#include "lexertypes.h"
+#include "lexer_types.h"
 
 #define CUR  (l->src[l->cur])
 #define PEEK (l->src[l->cur + 1])
