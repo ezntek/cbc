@@ -103,15 +103,14 @@ typedef enum {
     TOK_COMMA,
     TOK_COLON,
     TOK_SEMICOLON,
+    TOK_DOT,
 
     // Operators
     TOK_ADD,
     TOK_SUB,
     TOK_MUL,
     TOK_DIV,
-    TOK_PERCENT,
     TOK_CARET,
-    TOK_TILDE,
     TOK_LT,
     TOK_GT,
     TOK_LEQ,

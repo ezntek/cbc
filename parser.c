@@ -465,28 +465,57 @@ static bool ps_postfix(Parser* ps) {
     }
 
     do {
-        if (ps_check(ps, TOK_CARET)) {
-            (void)ps_consume(ps);
-            ps->expr =
-                cb_expr_new_unary(ps_get_pos(ps), CB_EXPR_DEREF, ps->expr);
-        } // TODO: array index, function call
-        // we checked everything
-        else {
+        if (ps->eof)
             break;
+
+        if_let(Token*, t, ps_peek(ps)) {
+            switch (t->kind) {
+                case TOK_CARET: {
+                    (void)ps_consume(ps);
+                    ps->expr = cb_expr_new_unary(ps_get_pos(ps), CB_EXPR_DEREF,
+                                                 ps->expr);
+                } break;
+                case TOK_LPAREN: {
+                    // TODO: function call
+                } break;
+                case TOK_LBRACKET: {
+                    // TODO: array index
+                } break;
+                case TOK_DOT: {
+                    // TODO: array index
+                } break;
+                default: goto done;
+            }
         }
     } while (1);
+done:
 
     return true;
 }
 
+static const CB_ExprKind UNARY_OP_TABLE[] = {
+    [TOK_SUB] = CB_EXPR_NEGATION,
+    [TOK_CARET] = CB_EXPR_REF,
+    [TOK_NOT] = CB_EXPR_NOT,
+    [TOK_BITNOT] = CB_EXPR_BITNOT,
+};
+
 static bool ps_unary(Parser* ps) {
     if_let(Token*, t, ps_peek(ps)) {
+        // prefix ops
         switch (t->kind) {
-            case TOK_SUB: {
+            case TOK_SUB:
+            case TOK_CARET:
+            case TOK_NOT:
+            case TOK_BITNOT: {
                 Pos p = ps_consume(ps).data->pos;
-                if (!ps_unary(ps))
+                if (!ps_unary(ps)) {
+                    ps_diag(ps, "could not parse expression after %s",
+                            token_kind_string(t->kind));
                     return false;
-                ps->expr = cb_expr_new_unary(p, CB_EXPR_NEGATION, ps->expr);
+                }
+                ps->expr =
+                    cb_expr_new_unary(p, UNARY_OP_TABLE[t->kind], ps->expr);
             } break;
             default: break;
         }

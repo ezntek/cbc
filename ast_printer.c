@@ -27,7 +27,8 @@ static const char* EXPR_KIND_STRINGS[] = {
     [CB_EXPR_FNCALL] = "fncall",     [CB_EXPR_ADD] = "add",
     [CB_EXPR_SUB] = "sub",           [CB_EXPR_MUL] = "mul",
     [CB_EXPR_DIV] = "div",           [CB_EXPR_POW] = "pow",
-    [CB_EXPR_DEREF] = "deref",
+    [CB_EXPR_DEREF] = "deref",       [CB_EXPR_REF] = "ref",
+    [CB_EXPR_BITNOT] = "bitnot",
 };
 
 static const char* expr_kind_string(CB_ExprKind k) {

@@ -79,9 +79,11 @@ typedef enum {
     // Unaries
     CB_EXPR_NEGATION,
     CB_EXPR_NOT,
+    CB_EXPR_BITNOT,
     CB_EXPR_GROUPING,
     CB_EXPR_TYPECAST,
     CB_EXPR_FNCALL,
+    CB_EXPR_REF,
     CB_EXPR_DEREF,
     // Binaries
     CB_EXPR_ADD,

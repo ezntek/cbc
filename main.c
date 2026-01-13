@@ -65,9 +65,9 @@ i32 main(i32 argc, char** argv) {
 
     AstPrinter ap = ap_new();
     ap_visit_expr(&ap, &ps.expr);
-    cb_expr_free(&ps.expr);
     putchar('\n');
 
+    cb_expr_free(&ps.expr);
 end:
     ps_free(&ps);
     for (usize i = 0; i < toks.len; i++) {

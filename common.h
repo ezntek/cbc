@@ -73,6 +73,17 @@ typedef double f64;
 
 #define eprintf(...) fprintf(stderr, __VA_ARGS__);
 
+#ifdef _A_STRING_DEBUG
+#define panic(...)                                                             \
+    do {                                                                       \
+        eprintf("\033[31;1mpanic:\033[0m line %d, func \"%s\" in file "        \
+                "\"%s\": ",                                                    \
+                __LINE__, __func__, __FILE__);                                 \
+        eprintf(__VA_ARGS__);                                                  \
+        eprintf("\n");                                                         \
+        abort();                                                               \
+    } while (0)
+#else
 #define panic(...)                                                             \
     do {                                                                       \
         eprintf("\033[31;1mpanic:\033[0m line %d, func \"%s\" in file "        \
@@ -82,6 +93,7 @@ typedef double f64;
         eprintf("\n");                                                         \
         exit(1);                                                               \
     } while (0)
+#endif
 
 #ifdef unreachable
 #undef unreachable

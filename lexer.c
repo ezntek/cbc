@@ -136,13 +136,12 @@ static const char* TOKEN_STRINGS[] = {
     [TOK_COMMA] = "comma",
     [TOK_COLON] = "colon",
     [TOK_SEMICOLON] = "semicolon",
+    [TOK_DOT] = "dot",
     [TOK_ADD] = "add",
     [TOK_SUB] = "sub",
     [TOK_MUL] = "mul",
     [TOK_DIV] = "div",
-    [TOK_PERCENT] = "percent",
     [TOK_CARET] = "caret",
-    [TOK_TILDE] = "tilde",
     [TOK_LT] = "lt",
     [TOK_GT] = "gt",
     [TOK_LEQ] = "leq",
@@ -330,11 +329,11 @@ static bool lx_next_keyword(Lexer* l, const a_string* word);
 static bool lx_next_literal(Lexer* l, const a_string* word);
 
 static bool lx_is_separator(char ch) {
-    return strchr("{}[]();:,", ch);
+    return strchr("{}[]();:,.", ch);
 }
 
 static bool lx_is_operator_start(char ch) {
-    return strchr("+-*/=<>^!", ch);
+    return strchr("+-*/=<>&|^~", ch);
 }
 
 Lexer lx_new(const char* src, usize src_len) {
@@ -392,7 +391,7 @@ static bool lx_next_double_symbol(Lexer* l) {
     if (!lx_is_operator_start(CUR))
         return false;
 
-    if (l->cur + 2 >= l->src_len) {
+    if (l->cur + 1 >= l->src_len) {
         return false;
     }
 
@@ -408,6 +407,8 @@ static bool lx_next_double_symbol(Lexer* l) {
         l->token = TOK(SHR, 2);
     } else if (!strncmp(&CUR, "<<", 2)) {
         l->token = TOK(SHL, 2);
+    } else if (!strncmp(&CUR, "^^", 2)) {
+        l->token = TOK(BITXOR, 2);
     } else {
         return false;
     }
@@ -428,7 +429,8 @@ static bool lx_next_single_symbol(Lexer* l) {
         [':'] = TOK_COLON,    [','] = TOK_COMMA,  [';'] = TOK_SEMICOLON,
         ['>'] = TOK_LT,       ['<'] = TOK_GT,     ['='] = TOK_EQ,
         ['*'] = TOK_MUL,      ['/'] = TOK_DIV,    ['+'] = TOK_ADD,
-        ['-'] = TOK_SUB,      ['^'] = TOK_CARET,  ['%'] = TOK_PERCENT,
+        ['-'] = TOK_SUB,      ['^'] = TOK_CARET,  ['&'] = TOK_BITAND,
+        ['|'] = TOK_BITOR,    ['.'] = TOK_DOT,    ['~'] = TOK_BITNOT,
     };
 
     TokenKind t;
@@ -525,7 +527,7 @@ static bool lx_next_keyword(Lexer* l, const a_string* word) {
     }
 }
 
-static bool lx__is_number(const a_string* word) {
+static bool is_number(const a_string* word) {
     // edge case: single decimal
     if (as_first(word) == '.' && word->len == 1)
         return false;
@@ -554,6 +556,7 @@ static bool lx__is_number(const a_string* word) {
 
 static bool lx_next_literal(Lexer* l, const a_string* word) {
     char* p;
+
     if ((p = strchr("\"'", as_first(word)))) {
         if (word->len == 1)
             unreachable;
@@ -569,7 +572,7 @@ static bool lx_next_literal(Lexer* l, const a_string* word) {
         return true;
     }
 
-    if (lx__is_number(word)) {
+    if (is_number(word)) {
         a_string new = as_dupe(word);
         if (!as_valid(&new))
             panic("failed to dupe a_string for number");
@@ -603,7 +606,7 @@ static bool lx_next_literal(Lexer* l, const a_string* word) {
     return false;
 }
 
-static bool lx__is_ident(const a_string* s) {
+static bool is_ident(const a_string* s) {
     char first = as_first(s);
     if (!isalpha(first) && first != '_')
         return false;
@@ -618,7 +621,7 @@ static bool lx__is_ident(const a_string* s) {
 }
 
 static bool lx_next_ident(Lexer* l, const a_string* word) {
-    if (lx__is_ident(word)) {
+    if (is_ident(word)) {
         a_string new = as_dupe(word);
         if (!as_valid(&new))
             panic("failed to dupe a_string for ident");

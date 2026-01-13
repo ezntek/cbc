@@ -7,7 +7,7 @@ OBJ = $(SRC:.c=.o)
 HEADERS = common.h a_vector.h $(SRC:.c=.h)
 
 RELEASE_CFLAGS = -O2 -Wall -Wextra -pedantic $(INCLUDE) 
-DEBUG_CFLAGS = -O0 -g -Wall -Wextra -pedantic -fno-stack-protector -fsanitize=address $(INCLUDE)
+DEBUG_CFLAGS = -D_A_STRING_DEBUG -O0 -g -Wall -Wextra -pedantic -fno-stack-protector -fsanitize=address $(INCLUDE)
 TARBALLFILES = Makefile LICENSE.md README.md 3rdparty $(SRC) $(HEADERS) main.c 
 
 TARGET=debug
