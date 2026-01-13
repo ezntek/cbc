@@ -170,6 +170,32 @@ void ap_visit_expr(AstPrinter* p, CB_Expr* e) {
     p->write(p, ")");
 }
 
-void ap_visit_stmt(AstPrinter* p, CB_Stmt* s);
-void ap_visit_output_stmt(AstPrinter* p, CB_OutputStmt* s);
-void ap_visit_input_stmt(AstPrinter* p, CB_InputStmt* s);
+void ap_visit_output_stmt(AstPrinter* p, CB_OutputStmt* s) {
+    p->write(p, "output{");
+    for (usize i = 0; i < s->exprs_count; i++) {
+        ap_visit_expr(p, &s->exprs[i]);
+        if (i != s->exprs_count - 1)
+            p->write(p, ", ");
+    }
+    p->write(p, "}");
+}
+
+void ap_visit_input_stmt(AstPrinter* p, CB_InputStmt* s) {
+    panic("not implemented");
+}
+
+void ap_visit_stmt(AstPrinter* p, CB_Stmt* s) {
+    switch (s->kind) {
+        case CB_STMT_EXPR: {
+            p->write(p, "expr(");
+            ap_visit_expr(p, &s->expr);
+            p->write(p, ")");
+        } break;
+        case CB_STMT_INPUT: {
+            ap_visit_input_stmt(p, &s->input);
+        } break;
+        case CB_STMT_OUTPUT: {
+            ap_visit_output_stmt(p, &s->output);
+        } break;
+    }
+}

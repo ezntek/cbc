@@ -88,6 +88,7 @@ static const char* TOKEN_STRINGS[] = {
     [TOK_DECLARE] = "DECLARE",
     [TOK_CONSTANT] = "CONSTANT",
     [TOK_OUTPUT] = "OUTPUT",
+    [TOK_PRINT] = "PRINT",
     [TOK_INPUT] = "INPUT",
     [TOK_AND] = "AND",
     [TOK_OR] = "OR",
@@ -250,6 +251,7 @@ static void lx_kwt_setup(void) {
     lx_kwt_add("declare", TOK_DECLARE);
     lx_kwt_add("constant", TOK_CONSTANT);
     lx_kwt_add("output", TOK_OUTPUT);
+    lx_kwt_add("print", TOK_PRINT);
     lx_kwt_add("input", TOK_INPUT);
     lx_kwt_add("and", TOK_AND);
     lx_kwt_add("or", TOK_OR);

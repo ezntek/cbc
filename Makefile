@@ -2,7 +2,7 @@ CC ?= cc
 LD ?= ld
 INCLUDE = 
 
-SRC = a_string.c lexer.c ast.c ast_printer.c parser/parser.c parser/expr.c
+SRC = a_string.c lexer.c ast.c ast_printer.c parser/parser.c parser/expr.c parser/stmt.c
 OBJ = $(SRC:.c=.o)
 HEADERS = common.h a_vector.h a_string.h lexer.h ast.h ast_printer.h parser/parser.h
 

@@ -58,16 +58,16 @@ i32 main(i32 argc, char** argv) {
 
     Parser ps = ps_new(toks.data, toks.len, as_dupe(&filename));
 
-    if (!ps_expr(&ps)) {
+    if (!ps_stmt(&ps)) {
         eprintf("error\n");
         goto end;
     }
 
     AstPrinter ap = ap_new();
-    ap_visit_expr(&ap, &ps.expr);
+    ap_visit_stmt(&ap, &ps.stmt);
     putchar('\n');
 
-    cb_expr_free(&ps.expr);
+    cb_stmt_free(&ps.stmt);
 end:
     ps_free(&ps);
     for (usize i = 0; i < toks.len; i++) {

@@ -120,11 +120,17 @@ MaybeToken ps_consume_and_expect(Parser* ps, TokenKind expected) {
 }
 
 Pos ps_get_pos(Parser* ps) {
-    if_let(Token*, t, ps_prev(ps)) {
+    if_let(Token*, t, ps_peek(ps)) {
         return t->pos;
     }
 
-    panic("no previous token");
+    if (ps->tokens_len > 0)
+        return ps->tokens[ps->tokens_len - 1].pos;
+
+    return (Pos){
+        .col = 1,
+        .row = 1,
+    };
 }
 
 void ps_diag_at(Parser* ps, Pos pos, const char* format, ...) {
@@ -167,12 +173,6 @@ void ps_diag_expected(Parser* ps, const char* thing) {
     }
 
     ps_diag(ps, "expected %s, but found no token", thing);
-}
-
-// actual parsing functions
-bool ps_stmt(Parser* ps) {
-    (void)ps;
-    return false;
 }
 
 Parser ps_new(Token* tokens, usize tokens_len, a_string file_name) {

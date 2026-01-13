@@ -112,19 +112,17 @@ void cb_expr_free(CB_Expr* e) {
     }
 }
 
+// takes ownership
 CB_OutputStmt cb_output_stmt_new(CB_Expr* exprs, usize exprs_count) {
-    dupe_slice(CB_Expr, duped_exprs, exprs, exprs_count);
     return (CB_OutputStmt){
-        duped_exprs,
+        exprs,
         exprs_count,
     };
 }
 
 void cb_output_stmt_free(CB_OutputStmt* s) {
-    for (usize i = 0; i < s->exprs_count; i++) {
+    for (usize i = 0; i < s->exprs_count; i++)
         cb_expr_free(&s->exprs[i]);
-        free(&s->exprs[i]);
-    }
     free(s->exprs);
 }
 

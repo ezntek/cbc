@@ -51,6 +51,7 @@ typedef enum {
     TOK_DECLARE,
     TOK_CONSTANT,
     TOK_OUTPUT,
+    TOK_PRINT,
     TOK_INPUT,
     TOK_AND,
     TOK_OR,
