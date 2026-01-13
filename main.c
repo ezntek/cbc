@@ -45,9 +45,9 @@ i32 main(i32 argc, char** argv) {
     }
 
     Lexer l = lx_new(s.data, s.len);
-    Tokens toks = lx_tokenize(&l);
+    Tokens toks = {0};
 
-    if (!toks.len)
+    if (!lx_tokenize(&l, &toks))
         goto end;
 
     printf("\x1b[2m=== TOKENS ===\n");

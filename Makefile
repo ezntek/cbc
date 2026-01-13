@@ -35,10 +35,10 @@ cbc: deps $(OBJ) $(HEADERS) main.o
 	$(CC) $(CFLAGS) -o cbc main.o $(OBJ)
 
 main.o: main.c common.h
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 %.o: %.c %.h common.h
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 dep_uthash:
 	mkdir -p 3rdparty/

@@ -65,7 +65,7 @@
 #define TRY_AND_FREE(expr)                                                     \
     do {                                                                       \
         if ((expr)) {                                                          \
-            goto free_and_done;                                                \
+            goto next_token_error;                                             \
         } else if (l->error.kind != LX_ERROR_NULL) {                           \
             as_free(&word);                                                    \
             return NULL;                                                       \
@@ -407,7 +407,7 @@ static bool lx_next_double_symbol(Lexer* l) {
         l->token = TOK(SHR, 2);
     } else if (!strncmp(&CUR, "<<", 2)) {
         l->token = TOK(SHL, 2);
-    } else if (!strncmp(&CUR, "^^", 2)) {
+    } else if (!strncmp(&CUR, "~^", 2)) {
         l->token = TOK(BITXOR, 2);
     } else {
         return false;
@@ -585,22 +585,22 @@ static bool lx_next_literal(Lexer* l, const a_string* word) {
         return true;
     }
 
-    if (as_equal_cstr(word, "true")) {
-        l->token = (Token){
-            .kind = TOK_LITERAL_BOOLEAN,
-            .pos = POS(word->len),
-            .data.boolean = true,
-        };
-        return true;
-    }
-
-    if (as_equal_cstr(word, "false")) {
-        l->token = (Token){
-            .kind = TOK_LITERAL_BOOLEAN,
-            .pos = POS(word->len),
-            .data.boolean = false,
-        };
-        return true;
+    if (as_is_case_consistent(word)) {
+        if (as_equal_case_insensitive_cstr(word, "true")) {
+            l->token = (Token){
+                .kind = TOK_LITERAL_BOOLEAN,
+                .pos = POS(word->len),
+                .data.boolean = true,
+            };
+            return true;
+        } else if (as_equal_case_insensitive_cstr(word, "false")) {
+            l->token = (Token){
+                .kind = TOK_LITERAL_BOOLEAN,
+                .pos = POS(word->len),
+                .data.boolean = false,
+            };
+            return true;
+        }
     }
 
     return false;
@@ -669,29 +669,28 @@ Token* lx_next_token(Lexer* l) {
     TRY_AND_FREE(lx_next_literal(l, &word));
     TRY_AND_FREE(lx_next_ident(l, &word));
 
-free_and_done:
+next_token_error:
     as_free(&word);
 done:
     return &l->token;
 }
 
-Tokens lx_tokenize(Lexer* l) {
-    Tokens toks = {0};
+bool lx_tokenize(Lexer* l, Tokens* out) {
+    *out = (Tokens){0};
     Token* tok = {0};
+
     do {
         tok = lx_next_token(l);
 
         if (!tok) {
             lx_perror(l->error.kind, "\033[31;1mlexer error\033[0m");
-            av_clear(&toks);
-            goto end;
+            return false;
         }
 
-        av_append(&toks, *tok);
+        av_append(out, *tok);
     } while (!tok || tok->kind != TOK_EOF);
 
-end:
-    return toks;
+    return true;
 }
 
 void lx_free(Lexer* l) {

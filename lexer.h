@@ -51,6 +51,6 @@ void lx_reset(Lexer* l);
 char* lx_strerror(LexerErrorKind e);
 a_string lx_as_strerror(LexerErrorKind e);
 void lx_perror(LexerErrorKind e, const char* pre);
-Tokens lx_tokenize(Lexer* l);
+bool lx_tokenize(Lexer* l, Tokens* out);
 
 #endif // _LEXER_H

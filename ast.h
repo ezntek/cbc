@@ -91,12 +91,25 @@ typedef enum {
     CB_EXPR_MUL,
     CB_EXPR_DIV,
     CB_EXPR_POW,
+    CB_EXPR_LT,
+    CB_EXPR_GT,
+    CB_EXPR_LEQ,
+    CB_EXPR_GEQ,
+    CB_EXPR_EQ,
+    CB_EXPR_NEQ,
+    CB_EXPR_SHL,
+    CB_EXPR_SHR,
+    CB_EXPR_OR,
+    CB_EXPR_AND,
+    CB_EXPR_BITOR,
+    CB_EXPR_BITAND,
+    CB_EXPR_BITXOR,
     // TODO: add the rest
 } CB_ExprKind;
 
 #define cb_expr_kind_is_unary(k)                                               \
     (CB_EXPR_NEGATION <= (k) && (k) <= CB_EXPR_DEREF)
-#define cb_expr_kind_is_binary(k) (CB_EXPR_ADD <= (k) && (k) <= CB_EXPR_POW)
+#define cb_expr_kind_is_binary(k) (CB_EXPR_ADD <= (k) && (k) <= CB_EXPR_BITXOR)
 
 typedef struct CB_Expr CB_Expr;
 typedef struct CB_Expr {

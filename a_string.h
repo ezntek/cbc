@@ -423,7 +423,7 @@ bool as_equal_case_insensitive(const a_string* lhs, const a_string* rhs);
  * @param lhs the first string
  * @param rhs the other string
  */
-bool as_equal_case_insensitive(const a_string* lhs, const a_string* rhs);
+bool as_equal_case_insensitive_cstr(const a_string* lhs, const char* rhs);
 
 /**
  * slices an a_string from begin to end, from a C string, discluding end.

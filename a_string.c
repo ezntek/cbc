@@ -584,11 +584,13 @@ bool as_equal_case_insensitive(const a_string* lhs, const a_string* rhs) {
 bool as_equal_case_insensitive_cstr(const a_string* lhs, const char* rhs) {
     if (!rhs)
         return false;
-    a_string arhs = {
-        .data = (char*)rhs,
-        .len = strlen(rhs),
-    }; // very sketchy, i know
-    return as_equal_case_insensitive(lhs, &arhs);
+
+    for (usize i = 0; rhs[i]; i++) {
+        if (tolower(lhs->data[i]) != tolower(rhs[i]))
+            return false;
+    }
+
+    return true;
 }
 
 a_string as_slice_cstr(const char* src, usize begin, usize end) {

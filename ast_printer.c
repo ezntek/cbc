@@ -9,11 +9,9 @@
  */
 #define _POSIX_C_SOURCE 200809L
 
-#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h> // used in macro
-#define _POSIX_C_SOURCE 200809L
 
 #include "a_string.h"
 #include "ast.h"
@@ -21,14 +19,34 @@
 #include "common.h"
 
 static const char* EXPR_KIND_STRINGS[] = {
-    [CB_EXPR_LIT] = "lit",           [CB_EXPR_IDENT] = "ident",
-    [CB_EXPR_NEGATION] = "neg",      [CB_EXPR_NOT] = "not",
-    [CB_EXPR_GROUPING] = "grouping", [CB_EXPR_TYPECAST] = "typecast",
-    [CB_EXPR_FNCALL] = "fncall",     [CB_EXPR_ADD] = "add",
-    [CB_EXPR_SUB] = "sub",           [CB_EXPR_MUL] = "mul",
-    [CB_EXPR_DIV] = "div",           [CB_EXPR_POW] = "pow",
-    [CB_EXPR_DEREF] = "deref",       [CB_EXPR_REF] = "ref",
+    [CB_EXPR_LIT] = "lit",
+    [CB_EXPR_IDENT] = "ident",
+    [CB_EXPR_NEGATION] = "neg",
+    [CB_EXPR_NOT] = "not",
+    [CB_EXPR_GROUPING] = "grouping",
+    [CB_EXPR_TYPECAST] = "typecast",
+    [CB_EXPR_FNCALL] = "fncall",
+    [CB_EXPR_ADD] = "add",
+    [CB_EXPR_SUB] = "sub",
+    [CB_EXPR_MUL] = "mul",
+    [CB_EXPR_DIV] = "div",
+    [CB_EXPR_POW] = "pow",
+    [CB_EXPR_DEREF] = "deref",
+    [CB_EXPR_REF] = "ref",
     [CB_EXPR_BITNOT] = "bitnot",
+    [CB_EXPR_LT] = "lt",
+    [CB_EXPR_GT] = "gt",
+    [CB_EXPR_LEQ] = "leq",
+    [CB_EXPR_GEQ] = "geq",
+    [CB_EXPR_EQ] = "eq",
+    [CB_EXPR_NEQ] = "neq",
+    [CB_EXPR_SHL] = "shl",
+    [CB_EXPR_SHR] = "shr",
+    [CB_EXPR_OR] = "or",
+    [CB_EXPR_AND] = "and",
+    [CB_EXPR_BITOR] = "bitor",
+    [CB_EXPR_BITAND] = "bitand",
+    [CB_EXPR_BITXOR] = "bitxor",
 };
 
 static const char* expr_kind_string(CB_ExprKind k) {
