@@ -40,9 +40,12 @@ AstPrinter ap_new_with_string_writer(void);
 
 void ap_visit_value(AstPrinter* p, const CB_Value* val);
 void ap_visit_expr(AstPrinter* p, CB_Expr* e);
-void ap_visit_stmt(AstPrinter* p, CB_Stmt* s);
+
 void ap_visit_output_stmt(AstPrinter* p, CB_OutputStmt* s);
 void ap_visit_input_stmt(AstPrinter* p, CB_InputStmt* s);
+void ap_visit_stmt(AstPrinter* p, CB_Stmt* s);
+
+void ap_visit_program(AstPrinter* p, CB_Program* prog);
 
 // actual visit functions
 

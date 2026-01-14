@@ -58,17 +58,19 @@ i32 main(i32 argc, char** argv) {
 
     Parser ps = ps_new(toks.data, toks.len, as_dupe(&filename));
 
-    if (!ps_stmt(&ps)) {
+    CB_Program prog = {0};
+
+    if (!ps_program(&ps, &prog)) {
         eprintf("error\n");
         goto end;
     }
 
     AstPrinter ap = ap_new();
-    ap_visit_stmt(&ap, &ps.stmt);
+    ap_visit_program(&ap, &prog);
     putchar('\n');
 
-    cb_stmt_free(&ps.stmt);
 end:
+    cb_program_free(&prog);
     ps_free(&ps);
     for (usize i = 0; i < toks.len; i++) {
         token_free(&toks.data[i]);

@@ -141,7 +141,7 @@ typedef enum {
 
 typedef struct {
     CB_Expr* exprs;
-    usize exprs_count;
+    usize len;
 } CB_OutputStmt;
 
 CB_OutputStmt cb_output_stmt_new(CB_Expr* exprs, usize exprs_count);
@@ -169,5 +169,13 @@ CB_Stmt cb_stmt_new_expr(Pos pos, CB_Expr expr);
 CB_Stmt cb_stmt_new_output(Pos pos, CB_OutputStmt output);
 CB_Stmt cb_stmt_new_input(Pos pos, CB_InputStmt input);
 void cb_stmt_free(CB_Stmt* s);
+
+typedef struct {
+    CB_Stmt* stmts;
+    usize len;
+} CB_Program;
+
+CB_Program cb_program_new(CB_Stmt* stmts, usize len);
+void cb_program_free(CB_Program* p);
 
 #endif // _AST_H

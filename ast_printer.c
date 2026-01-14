@@ -172,9 +172,9 @@ void ap_visit_expr(AstPrinter* p, CB_Expr* e) {
 
 void ap_visit_output_stmt(AstPrinter* p, CB_OutputStmt* s) {
     p->write(p, "output{");
-    for (usize i = 0; i < s->exprs_count; i++) {
+    for (usize i = 0; i < s->len; i++) {
         ap_visit_expr(p, &s->exprs[i]);
-        if (i != s->exprs_count - 1)
+        if (i != s->len - 1)
             p->write(p, ", ");
     }
     p->write(p, "}");
@@ -200,4 +200,13 @@ void ap_visit_stmt(AstPrinter* p, CB_Stmt* s) {
             ap_visit_output_stmt(p, &s->output);
         } break;
     }
+}
+
+void ap_visit_program(AstPrinter* p, CB_Program* prog) {
+    p->write(p, "program{\n");
+    for (usize i = 0; i < prog->len; i++) {
+        ap_visit_stmt(p, &prog->stmts[i]);
+        p->write(p, "\n");
+    }
+    p->write(p, "}");
 }

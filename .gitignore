@@ -3,4 +3,5 @@
 *.o
 cbc
 *.core
+*.qbe
 /*.bean

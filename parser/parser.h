@@ -36,5 +36,6 @@ void ps_free(Parser* ps);
 
 bool ps_expr(Parser* ps);
 bool ps_stmt(Parser* ps);
+bool ps_program(Parser* ps, CB_Program* out);
 
 #endif // _PARSER_H

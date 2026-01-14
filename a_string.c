@@ -276,6 +276,7 @@ bool as_valid(const a_string* s) {
     return !(s->len == (usize)-1 || s->cap == (usize)-1 || s->data == NULL);
 }
 
+#ifdef _A_STRING_DEBUG
 char as_at(const a_string* s, usize idx) {
     if (!as_valid(s))
         panic("cannot operate on an invalid a_string!");
@@ -306,6 +307,19 @@ char as_last(const a_string* s) {
 
     return s->data[s->len - 1];
 }
+#else
+inline char as_at(const a_string* s, usize idx) {
+    return s->data[idx];
+}
+
+inline char as_first(const a_string* s) {
+    return *s->data;
+}
+
+inline char as_last(const a_string* s) {
+    return s->data[s->len - 1];
+}
+#endif
 
 void as_append_char(a_string* s, char c) {
     if (!as_valid(s))

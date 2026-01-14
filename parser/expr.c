@@ -328,7 +328,7 @@ bool ps_postfix(Parser* ps) {
                     // TODO: array index
                 } break;
                 case TOK_DOT: {
-                    // TODO: array index
+                    // TODO: struct access
                 } break;
                 default: goto done;
             }

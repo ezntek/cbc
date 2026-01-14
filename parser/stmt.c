@@ -15,8 +15,11 @@
 
 AV_DECL(CB_Expr, Exprs)
 
-void ps_skip_to_newline(Parser* ps) {
+void ps_skip_past_newline(Parser* ps) {
     while (!ps->eof && ps_check(ps, TOK_NEWLINE))
+        ps_consume(ps);
+    // eat the last newline
+    if (!ps->eof)
         ps_consume(ps);
 }
 
@@ -44,7 +47,7 @@ static bool ps_output_stmt(Parser* ps) {
 
     while (!ps_check(ps, TOK_NEWLINE) && !ps->eof) {
         if (!ps_consume_and_expect(ps, TOK_COMMA).have) {
-            ps_skip_to_newline(ps);
+            ps_skip_past_newline(ps);
             goto fail;
         }
 
@@ -56,9 +59,11 @@ static bool ps_output_stmt(Parser* ps) {
         }
     }
 
+    // TCC fix
+    CB_OutputStmt output_stmt = {0};
 end:
     // move Exprs over to OutputStmt
-    CB_OutputStmt output_stmt = cb_output_stmt_new(exprs.data, exprs.len);
+    output_stmt = cb_output_stmt_new(exprs.data, exprs.len);
     ps->stmt = cb_stmt_new_output(begin->pos, output_stmt);
     return true;
 fail:
@@ -85,9 +90,7 @@ static bool ps_input_stmt(Parser* ps) {
 }
 
 bool ps_stmt(Parser* ps) {
-    ps_skip_to_newline(ps);
-
-    if (ps->eof || !IN_BOUNDS) {
+    if (ps->eof) {
         ps_diag(ps, "unexpected end of file");
         return false;
     }
@@ -101,5 +104,33 @@ bool ps_stmt(Parser* ps) {
     if (!ps->eof)
         ps_diag(ps, "unexpected token %s",
                 token_kind_string(ps_peek(ps).data->kind));
+    return false;
+}
+
+AV_DECL(CB_Stmt, Stmts)
+
+bool ps_program(Parser* ps, CB_Program* out) {
+    Stmts s = {0};
+
+    while (!ps->eof) {
+        if (ps_check(ps, TOK_NEWLINE))
+            (void)ps_consume(ps);
+
+        if (ps_stmt(ps))
+            av_append(&s, ps->stmt);
+
+        if (ps->error_count > MAX_ERROR_COUNT) {
+            ps_diag(ps, "too many errors, stopping here");
+            goto fail;
+        }
+    }
+
+    if (ps->error_reported)
+        goto fail;
+
+    *out = cb_program_new(s.data, s.len);
+    return true;
+fail:
+    av_free(&s);
     return false;
 }

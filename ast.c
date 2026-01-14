@@ -121,7 +121,7 @@ CB_OutputStmt cb_output_stmt_new(CB_Expr* exprs, usize exprs_count) {
 }
 
 void cb_output_stmt_free(CB_OutputStmt* s) {
-    for (usize i = 0; i < s->exprs_count; i++)
+    for (usize i = 0; i < s->len; i++)
         cb_expr_free(&s->exprs[i]);
     free(s->exprs);
 }
@@ -160,4 +160,15 @@ void cb_stmt_free(CB_Stmt* s) {
             cb_input_stmt_free(&s->input);
         } break;
     }
+}
+
+CB_Program cb_program_new(CB_Stmt* stmts, usize len) {
+    return (CB_Program){stmts, len};
+}
+
+void cb_program_free(CB_Program* p) {
+    for (usize i = 0; i < p->len; i++) {
+        cb_stmt_free(&p->stmts[i]);
+    }
+    free(p->stmts);
 }
