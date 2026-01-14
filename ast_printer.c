@@ -181,7 +181,9 @@ void ap_visit_output_stmt(AstPrinter* p, CB_OutputStmt* s) {
 }
 
 void ap_visit_input_stmt(AstPrinter* p, CB_InputStmt* s) {
-    panic("not implemented");
+    p->write(p, "input{");
+    ap_visit_expr(p, s->target);
+    p->write(p, "}");
 }
 
 void ap_visit_stmt(AstPrinter* p, CB_Stmt* s) {

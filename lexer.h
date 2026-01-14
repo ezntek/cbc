@@ -48,7 +48,7 @@ Lexer lx_new(const char* src, usize src_len);
 Token* lx_next_token(Lexer* l);
 void lx_free(Lexer* l);
 void lx_reset(Lexer* l);
-char* lx_strerror(LexerErrorKind e);
+const char* lx_strerror(LexerErrorKind e);
 a_string lx_as_strerror(LexerErrorKind e);
 void lx_perror(LexerErrorKind e, const char* pre);
 bool lx_tokenize(Lexer* l, Tokens* out);

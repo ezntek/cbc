@@ -145,7 +145,7 @@ CB_Stmt cb_stmt_new_output(Pos pos, CB_OutputStmt output) {
 }
 
 CB_Stmt cb_stmt_new_input(Pos pos, CB_InputStmt input) {
-    return (CB_Stmt){CB_STMT_OUTPUT, pos, .input = input};
+    return (CB_Stmt){CB_STMT_INPUT, pos, .input = input};
 }
 
 void cb_stmt_free(CB_Stmt* s) {

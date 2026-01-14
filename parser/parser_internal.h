@@ -41,7 +41,7 @@ bool ps_bump_error_count(Parser* ps);
 void ps_diag(Parser* ps, const char* format, ...);
 void ps_diag_expected(Parser* ps, const char* thing);
 void ps_diag_at(Parser* ps, Pos pos, const char* format, ...);
-void ps_skip_stmt(Parser* ps);
+void ps_skip_to_newline(Parser* ps);
 
 bool ps_literal(Parser* ps);
 bool ps_primary(Parser* ps);

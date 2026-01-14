@@ -15,22 +15,18 @@
 
 AV_DECL(CB_Expr, Exprs)
 
-void ps_skip_stmt(Parser* ps) {
+void ps_skip_to_newline(Parser* ps) {
     while (!ps->eof && ps_check(ps, TOK_NEWLINE))
         ps_consume(ps);
 }
 
 static bool ps_output_stmt(Parser* ps) {
-    MaybeToken mt = ps_check_and_consume(ps, TOK_OUTPUT);
     Token* begin = NULL;
     Exprs exprs = {0};
 
-    if (!mt.have) {
-        mt = ps_check_and_consume(ps, TOK_PRINT);
-        if (!mt.have)
-            return false;
-    }
-    begin = mt.data;
+    if (!ps_check(ps, TOK_OUTPUT) && !ps_check(ps, TOK_PRINT))
+        return false;
+    begin = ps_consume(ps).data;
 
     if (ps_check(ps, TOK_NEWLINE))
         goto end;
@@ -48,7 +44,7 @@ static bool ps_output_stmt(Parser* ps) {
 
     while (!ps_check(ps, TOK_NEWLINE) && !ps->eof) {
         if (!ps_consume_and_expect(ps, TOK_COMMA).have) {
-            ps_skip_stmt(ps);
+            ps_skip_to_newline(ps);
             goto fail;
         }
 
@@ -60,8 +56,8 @@ static bool ps_output_stmt(Parser* ps) {
         }
     }
 
-    // move Exprs over to OutputStmt
 end:
+    // move Exprs over to OutputStmt
     CB_OutputStmt output_stmt = cb_output_stmt_new(exprs.data, exprs.len);
     ps->stmt = cb_stmt_new_output(begin->pos, output_stmt);
     return true;
@@ -70,8 +66,36 @@ fail:
     return false;
 }
 
+static bool ps_input_stmt(Parser* ps) {
+    Token* begin = NULL;
+
+    if (!ps_check(ps, TOK_INPUT))
+        return false;
+
+    begin = ps_consume(ps).data;
+
+    if (!ps_expr(ps)) {
+        ps_diag_at(ps, begin->pos, "could not parse expression after INPUT");
+        return false;
+    }
+
+    CB_InputStmt input_stmt = cb_input_stmt_new(ps->expr);
+    ps->stmt = cb_stmt_new_input(begin->pos, input_stmt);
+    return true;
+}
+
 bool ps_stmt(Parser* ps) {
+    ps_skip_to_newline(ps);
+
+    if (ps->eof || !IN_BOUNDS) {
+        ps_diag(ps, "unexpected end of file");
+        return false;
+    }
+
     if (ps_output_stmt(ps))
+        return true;
+
+    if (ps_input_stmt(ps))
         return true;
 
     if (!ps->eof)

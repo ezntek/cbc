@@ -72,10 +72,6 @@
         }                                                                      \
     } while (0)
 
-#define ERROR_BUFSZ 128
-
-static char ERROR_BUF[ERROR_BUFSZ] = {0};
-
 static const char* TOKEN_STRINGS[] = {
     [TOK_IDENT] = "ident",
     [TOK_EOF] = "eof",
@@ -700,33 +696,20 @@ void lx_free(Lexer* l) {
     lx_kwt_free();
 }
 
-char* lx_strerror(LexerErrorKind k) {
-    char* s;
-    switch (k) {
-        case LX_ERROR_NULL: {
-            s = "(no error)";
-        } break;
-        case LX_ERROR_UNTERMINATED_LITERAL: {
-            s = "unterminated string or character literal";
-        } break;
-        case LX_ERROR_EOF: {
-            s = "unexpected end of file";
-        } break;
-        case LX_ERROR_BAD_ESCAPE: {
-            s = "bad escape sequence";
-        } break;
-        case LX_ERROR_MISMATCHED_DELIMITER: {
-            s = "mismatched delimiter in delimited literal";
-        } break;
-        case LX_ERROR_INVALID_IDENTIFIER: {
-            s = "invalid identifier";
-        } break;
-        case LX_ERROR_CHAR_LITERAL_TOO_LONG: {
-            s = "character literal is too long";
-        } break;
-    }
+static const char* LEXER_ERROR_TABLE[] = {
+    [LX_ERROR_NULL] = "(no error)",
+    [LX_ERROR_UNTERMINATED_LITERAL] =
+        "unterminated string or character literal",
+    [LX_ERROR_EOF] = "unexpected end of file",
+    [LX_ERROR_BAD_ESCAPE] = "bad escape sequence",
+    [LX_ERROR_MISMATCHED_DELIMITER] =
+        "mismatched delimiter in delimited literal",
+    [LX_ERROR_INVALID_IDENTIFIER] = "invalid identifier",
+    [LX_ERROR_CHAR_LITERAL_TOO_LONG] = "character literal is too long",
+};
 
-    return strncpy(ERROR_BUF, s, ERROR_BUFSZ - 1);
+const char* lx_strerror(LexerErrorKind k) {
+    return LEXER_ERROR_TABLE[k];
 }
 
 a_string lx_as_strerror(LexerErrorKind k) {
@@ -734,8 +717,8 @@ a_string lx_as_strerror(LexerErrorKind k) {
 }
 
 void lx_perror(LexerErrorKind k, const char* pre) {
-    char* err = lx_strerror(k);
-    printf("%s: %s\n", pre, err);
+    const char* err = lx_strerror(k);
+    eprintf("%s: %s\n", pre, err);
 }
 
 void lx_reset(Lexer* l) {

@@ -294,7 +294,7 @@ char as_first(const a_string* s) {
     if (s->len == 0)
         panic("cannot get the first character of an empty a_string!");
 
-    return s->data[0];
+    return *s->data;
 }
 
 char as_last(const a_string* s) {
@@ -676,9 +676,11 @@ bool as_is_case_consistent(const a_string* s) {
     if (!s->len)
         return true;
 
-    bool upper = isupper(as_first(s));
-    for (usize i = 0; i < s->len; i++) {
-        if (isupper(as_at(s, i)) != upper)
+    // is_upper must be used, or else somehow it breaks
+    bool upper = isupper(as_first(s)), is_upper;
+    for (usize i = 1; i < s->len; i++) {
+        is_upper = isupper(as_at(s, i));
+        if (is_upper != upper)
             return false;
     }
 
