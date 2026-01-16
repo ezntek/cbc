@@ -41,16 +41,13 @@ bool ps_bump_error_count(Parser* ps);
 void ps_diag(Parser* ps, const char* format, ...);
 void ps_diag_expected(Parser* ps, const char* thing);
 void ps_diag_at(Parser* ps, Pos pos, const char* format, ...);
-void ps_skip_to_newline(Parser* ps);
+void ps_skip_past_newline(Parser* ps);
 
-bool ps_literal(Parser* ps);
-bool ps_primary(Parser* ps);
-bool ps_postfix(Parser* ps);
-bool ps_unary(Parser* ps);
-bool ps_binary(Parser* ps, u8 min_prec);
-bool ps_expr(Parser* ps);
-
-bool ps_stmt(Parser* ps);
+bool parse_literal(Parser* ps);
+bool parse_primary(Parser* ps);
+bool parse_postfix(Parser* ps);
+bool parse_unary(Parser* ps);
+bool parse_binary(Parser* ps, u8 min_prec);
 
 #define diag_token(t, ...) ps_diag_at(ps, (t)->pos, __VA_ARGS__)
 

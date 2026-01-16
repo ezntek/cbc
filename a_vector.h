@@ -20,8 +20,8 @@
 #define AV_DECL(T, name)                                                       \
     typedef struct {                                                           \
         T* data;                                                               \
-        u32 len;                                                               \
-        u32 cap;                                                               \
+        usize len;                                                             \
+        usize cap;                                                             \
     } name;
 
 #define av_append(v, item)                                                     \

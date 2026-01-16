@@ -292,7 +292,7 @@ static void lx_kwt_setup(void) {
 static void lx_kwt_add(const char* s, TokenKind k) {
     KeywordTable* row = malloc(sizeof(KeywordTable));
     check_alloc(row);
-    strncpy(row->txt, s, LX_KWT_STRSZ);
+    strncpy(row->txt, s, LX_KWT_STRSZ - 1);
     row->kw = k;
     HASH_ADD_STR(kwt, txt, row);
 }

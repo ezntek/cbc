@@ -72,7 +72,7 @@ void as_copy_cstr(a_string* dest, const char* src) {
         as_reserve(dest, len);
     }
 
-    strncpy(dest->data, src, len);
+    strcpy(dest->data, src);
     dest->len = len;
     if (dest->data[dest->len] != '\0') {
         dest->data[dest->len] = '\0'; // always nullterm

@@ -20,9 +20,6 @@
 #include "parser.h"
 #include "parser_internal.h"
 
-Parser parser_new(Tokens toks);
-void parser_free(Parser* ps);
-
 MaybeToken ps_consume(Parser* ps) {
     if (ps->cur < ps->tokens_len) {
         return HAVE_TOKEN(&ps->tokens[ps->cur++]);

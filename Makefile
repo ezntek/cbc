@@ -2,12 +2,13 @@ CC ?= cc
 LD ?= ld
 INCLUDE = 
 
-SRC = a_string.c lexer.c ast.c ast_printer.c parser/parser.c parser/expr.c parser/stmt.c
+SRC = a_string.c lexer.c ast.c ast_printer.c parser/parser.c parser/expr.c parser/stmt.c compiler.c
 OBJ = $(SRC:.c=.o)
-HEADERS = common.h a_vector.h a_string.h lexer.h ast.h ast_printer.h parser/parser.h
+HEADERS = common.h a_vector.h a_string.h lexer.h ast.h ast_printer.h parser/parser.h compiler.h
 
-RELEASE_CFLAGS = -O2 -Wall -Wextra -pedantic $(INCLUDE) 
-DEBUG_CFLAGS = -D_A_STRING_DEBUG -O0 -g -Wall -Wextra -pedantic -fno-stack-protector -fsanitize=address $(INCLUDE)
+CFLAGS = -Wall -Wextra -pedantic
+RELEASE_CFLAGS = -O2
+DEBUG_CFLAGS = -D_A_STRING_DEBUG -O0 -g -fno-stack-protector -fsanitize=address
 TARBALLFILES = Makefile LICENSE.md README.md 3rdparty $(SRC) $(HEADERS) main.c 
 
 TARGET=debug
@@ -23,11 +24,17 @@ ifeq (,$(shell command -v curl))
 $(error curl is not installed on your system.)
 endif
 
-ifeq ($(TARGET),debug)
-	CFLAGS=$(DEBUG_CFLAGS)
-else
-	CFLAGS=$(RELEASE_CFLAGS)
+ifeq (,$(shell command -v qbe))
+$(error qbe is not installed on your system.)
 endif
+
+ifeq ($(TARGET),debug)
+CFLAGS += $(DEBUG_CFLAGS)
+else
+CFLAGS += $(RELEASE_CFLAGS)
+endif
+
+CFLAGS += $(INCLUDE)
 
 endif
 

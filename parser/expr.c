@@ -106,7 +106,7 @@ bool is_literal(TokenKind k) {
     }
 }
 
-bool ps_literal(Parser* ps) {
+bool parse_literal(Parser* ps) {
     MaybeToken peek = ps_peek(ps);
     if (peek.have && !is_literal(peek.data->kind)) {
         return false;
@@ -242,7 +242,7 @@ bool ps_literal(Parser* ps) {
     return false;
 }
 
-bool ps_primary(Parser* ps) {
+bool parse_primary(Parser* ps) {
     if (ps_check(ps, TOK_LPAREN)) {
         Token* t = ps_consume(ps).data;
         if (!ps_expr(ps)) {
@@ -255,7 +255,7 @@ bool ps_primary(Parser* ps) {
         return true;
     }
 
-    if (ps_literal(ps)) {
+    if (parse_literal(ps)) {
         return true;
     } else {
         if (ps->error_reported)
@@ -293,13 +293,13 @@ bool can_start_primary_unary(TokenKind k) {
     }
 }
 
-bool ps_postfix(Parser* ps) {
+bool parse_postfix(Parser* ps) {
     MaybeToken peek = ps_peek(ps);
     if (!peek.have) {
         return false;
     }
 
-    if (!ps_primary(ps)) {
+    if (!parse_primary(ps)) {
         ps_diag_at(ps, peek.data->pos, "could not parse primary expression");
         return false;
     }
@@ -346,7 +346,7 @@ static const CB_ExprKind UNARY_OP_TABLE[] = {
     [TOK_BITNOT] = CB_EXPR_BITNOT,
 };
 
-bool ps_unary(Parser* ps) {
+bool parse_unary(Parser* ps) {
     if_let(Token*, t, ps_peek(ps)) {
         // prefix ops
         switch (t->kind) {
@@ -355,7 +355,7 @@ bool ps_unary(Parser* ps) {
             case TOK_NOT:
             case TOK_BITNOT: {
                 Pos p = ps_consume(ps).data->pos;
-                if (!ps_unary(ps)) {
+                if (!parse_unary(ps)) {
                     ps_diag(ps, "could not parse expression after %s",
                             token_kind_string(t->kind));
                     return false;
@@ -367,7 +367,7 @@ bool ps_unary(Parser* ps) {
         }
         // if we still have tokens to postfix
         if (!ps->eof && can_start_primary_unary(ps_peek(ps).data->kind))
-            return ps_postfix(ps);
+            return parse_postfix(ps);
         else // assume everything OK
             return true;
     }
@@ -398,8 +398,8 @@ static const CB_ExprKind BINARY_OP_TABLE[] = {
 #define right_assoc(k) ((k) == TOK_CARET)
 
 // min_prec = 0 on initial calls
-bool ps_binary(Parser* ps, u8 min_prec) {
-    if (!ps_unary(ps))
+bool parse_binary(Parser* ps, u8 min_prec) {
+    if (!parse_unary(ps))
         return false;
 
     CB_Expr left = ps->expr;
@@ -413,7 +413,7 @@ bool ps_binary(Parser* ps, u8 min_prec) {
 
         (void)ps_consume(ps);
         u8 right_prec = right_assoc(kind) ? cur_prec : cur_prec + 1;
-        if (!ps_binary(ps, right_prec))
+        if (!parse_binary(ps, right_prec))
             return false;
 
         // the newly parsed rhs sohuld be in ps->expr
@@ -426,5 +426,5 @@ bool ps_binary(Parser* ps, u8 min_prec) {
 }
 
 bool ps_expr(Parser* ps) {
-    return ps_binary(ps, 0);
+    return parse_binary(ps, 0);
 }

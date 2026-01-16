@@ -101,6 +101,11 @@ bool ps_stmt(Parser* ps) {
     if (ps_input_stmt(ps))
         return true;
 
+    if (ps_expr(ps)) {
+        ps->stmt = cb_stmt_new_expr(ps->expr.pos, ps->expr);
+        return true;
+    }
+
     if (!ps->eof)
         ps_diag(ps, "unexpected token %s",
                 token_kind_string(ps_peek(ps).data->kind));
@@ -112,12 +117,17 @@ AV_DECL(CB_Stmt, Stmts)
 bool ps_program(Parser* ps, CB_Program* out) {
     Stmts s = {0};
 
-    while (!ps->eof) {
+    while (true) {
         if (ps_check(ps, TOK_NEWLINE))
             (void)ps_consume(ps);
 
+        if (ps->eof)
+            break;
+
         if (ps_stmt(ps))
             av_append(&s, ps->stmt);
+        else
+            ps_skip_past_newline(ps);
 
         if (ps->error_count > MAX_ERROR_COUNT) {
             ps_diag(ps, "too many errors, stopping here");

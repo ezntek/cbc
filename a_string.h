@@ -494,4 +494,11 @@ bool as_is_upper(const a_string* s);
 bool as_is_lower(const a_string* s);
 bool as_is_case_consistent(const a_string* s);
 
+// NOT GUARANTEED TO BE NULL TERMINATED
+// NOT GUARANTEED TO BE OWNED
+typedef struct {
+    char* data;
+    usize len;
+} a_slice;
+
 #endif // _A_STRING_H
