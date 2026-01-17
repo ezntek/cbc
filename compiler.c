@@ -67,12 +67,6 @@ void cm_free(Compiler* c) {
     av_free(&c->ss);
 }
 
-Val val(const char* data) {
-    Val v = {0};
-    memcpy(v.data, data, 8);
-    return v;
-}
-
 // writer functions
 
 static void cm_write(Compiler* c, const char* s) {
@@ -89,6 +83,21 @@ static void cm_write(Compiler* c, const char* s) {
     }
 }
 
+static void cm_writeln(Compiler* c, const char* s) {
+    switch (c->writer_state.mode) {
+        case CM_WRITER_MODE_STDOUT: {
+            printf("%s\n", s);
+        } break;
+        case CM_WRITER_MODE_FILE: {
+            fprintf(c->writer_state.fp, "%s\n", s);
+        } break;
+        case CM_WRITER_MODE_STRING: {
+            as_append_cstr(&c->writer_state.buf, s);
+            as_append_char(&c->writer_state.buf, '\n');
+        } break;
+    }
+}
+
 #define CM_WRITEF_MAXSIZE 1024
 static char writef_buf[CM_WRITEF_MAXSIZE] = {0};
 
@@ -98,7 +107,7 @@ static void cm_writef(Compiler* c, const char* restrict format, ...) {
 
     switch (c->writer_state.mode) {
         case CM_WRITER_MODE_STDOUT: {
-            vfprintf(stdout, format, lst);
+            vprintf(format, lst);
         } break;
         case CM_WRITER_MODE_FILE: {
             vfprintf(c->writer_state.fp, format, lst);
@@ -112,34 +121,58 @@ static void cm_writef(Compiler* c, const char* restrict format, ...) {
     va_end(lst);
 }
 
-static char name_buf[8] = {0};
+static void cm_writefln(Compiler* c, const char* restrict format, ...) {
+    va_list lst;
+    va_start(lst, format);
+
+    switch (c->writer_state.mode) {
+        case CM_WRITER_MODE_STDOUT: {
+            vprintf(format, lst);
+            putchar('\n');
+        } break;
+        case CM_WRITER_MODE_FILE: {
+            vfprintf(c->writer_state.fp, format, lst);
+            fprintf(c->writer_state.fp, "\n");
+        } break;
+        case CM_WRITER_MODE_STRING: {
+            vsnprintf(writef_buf, CM_WRITEF_MAXSIZE - 1, format, lst);
+            as_append_cstr(&c->writer_state.buf, writef_buf);
+            as_append_char(&c->writer_state.buf, '\n');
+        } break;
+    }
+
+    va_end(lst);
+}
 
 static Val cm_literal(Compiler* c, CB_Value* e) {
+    usize id = c->id++;
+
     switch (e->kind) {
         case CB_PRIM_STRING: {
-            usize idx = c->ss.len;
             av_append(&c->ss, as_slice_cstr(e->string.data, 0, e->string.len));
-            snprintf(name_buf, 8, "$s%zX", idx);
-            Val res = val(name_buf);
-            return res;
+            cm_writefln(c, "%%T%zu =l copy $__S%zu", id, c->string_id++);
+            return (Val){id, CB_PRIM_STRING};
+        } break;
+        case CB_PRIM_INTEGER: {
+            cm_writefln(c, "%%T%zu =l copy %li", id, e->integer);
+            return (Val){id, CB_PRIM_INTEGER};
+        } break;
+        case CB_PRIM_REAL: {
+            cm_writefln(c, "%%T%zu =d copy d_%f", id, e->real);
+            return (Val){id, CB_PRIM_REAL};
+        } break;
+        case CB_PRIM_BOOLEAN: {
+            cm_writefln(c, "%%T%zu =w copy %d", id, e->boolean);
+            return (Val){id, CB_PRIM_BOOLEAN};
+        } break;
+        case CB_PRIM_CHAR: {
+            cm_writefln(c, "%%T%zu =w copy %d", id, e->chr);
+            return (Val){id, CB_PRIM_CHAR};
         } break;
         default: {
             panic("not implemented");
         } break;
-
             /*
-            case CB_PRIM_INTEGER: {
-
-            } break;
-            case CB_PRIM_REAL: {
-
-            } break;
-            case CB_PRIM_BOOLEAN: {
-
-            } break;
-            case CB_PRIM_CHAR: {
-
-            } break;
             case CB_PRIM_NULL: {
 
             } break;
@@ -161,9 +194,36 @@ Val cm_expr(Compiler* c, CB_Expr* e) {
 
 static void cm_output_stmt(Compiler* c, CB_Stmt* s) {
     for (usize i = 0; i < s->output.len; i++) {
-        Val v = cm_expr(c, &s->output.exprs[i]);
-        cm_writef(c, "%%r =w call $puts(l %s)\n", v.data);
+        CB_Expr* e = &s->output.exprs[i];
+        Val v = cm_expr(c, e);
+        switch (v.kind) {
+            case CB_PRIM_STRING: {
+                cm_writefln(c, "call $printf(l $__FS, ..., l %%T%zu)", v.id);
+            } break;
+            case CB_PRIM_INTEGER: {
+                cm_writefln(c, "call $printf(l $__FI, ..., l %%T%zu)", v.id);
+            } break;
+            case CB_PRIM_REAL: {
+                cm_writefln(c, "call $printf(l $__FR, ..., d %%T%zu)", v.id);
+            } break;
+            case CB_PRIM_BOOLEAN: {
+                cm_writefln(c, "call $__PRINT_BOOLEAN(w %%T%zu)", v.id);
+            } break;
+            case CB_PRIM_CHAR: {
+                cm_writefln(c, "call $printf(l $__FC, ..., w %%T%zu)", v.id);
+            } break;
+            default: {
+                panic("not implemented");
+            } break;
+                /*
+                case CB_PRIM_NULL: {
+
+                } break;
+                */
+        }
     }
+
+    cm_writefln(c, "call $putchar(w 10)\n");
 }
 
 void cm_stmt(Compiler* c, CB_Stmt* s) {
@@ -175,16 +235,43 @@ void cm_stmt(Compiler* c, CB_Stmt* s) {
     }
 }
 
+static void write_utils(Compiler* c) {
+    cm_write(c, "function $__PRINT_BOOLEAN(w %val) {\n"
+                "@start\n"
+                "%fp =l loadl $stdout\n"
+                "jnz %val, @t, @f\n"
+                "@t\n"
+                "call $fputs(l $__FTRUE, l %fp)\n"
+                "jmp @e\n"
+                "@f\n"
+                "call $fputs(l $__FFALSE, l %fp)\n"
+                "@e\n"
+                "ret\n"
+                "}\n");
+}
+
+static void write_format_specifiers(Compiler* c) {
+    cm_writeln(c, "data $__FS = { b \"%s\", b 0 }\n"
+                  "data $__FI = { b \"%li\", b 0 }\n"
+                  "data $__FR = { b \"%f\", b 0 }\n"
+                  "data $__FC = { b \"%c\", b 0 }\n"
+                  "data $__FFALSE = { b \"FALSE\", b 0 }\n"
+                  "data $__FTRUE = { b \"TRUE\", b 0 }\n");
+}
+
 void cm_program(Compiler* c, CB_Program* prog) {
-    cm_write(c, "export function w $main() {\n@start\n");
+    write_utils(c);
+    cm_writeln(c, "export function w $main() {\n@start");
     for (usize i = 0; i < prog->len; i++) {
         cm_stmt(c, &prog->stmts[i]);
     }
-    cm_write(c, "ret 0\n}\n");
+    cm_writeln(c, "ret 0\n}");
+
     for (usize i = 0; i < c->ss.len; i++) {
-        cm_writef(c, "data $s%zu = align 1 { b \"", i);
+        cm_writef(c, "data $__S%zu = align 1 { b \"", i);
         // TODO: escape sequences
         cm_writef(c, "%.*s", as_fmt(c->ss.data[i]));
-        cm_write(c, "\", b 0 }\n");
+        cm_writeln(c, "\", b 0 }\n");
     }
+    write_format_specifiers(c);
 }

@@ -20,54 +20,56 @@
 #include "parser.h"
 #include "parser_internal.h"
 
-MaybeToken ps_consume(Parser* ps) {
-    if (ps->cur < ps->tokens_len) {
-        return HAVE_TOKEN(&ps->tokens[ps->cur++]);
+Token* ps_consume(Parser* ps) {
+    if (IN_BOUNDS) {
+        return &ps->tokens[ps->cur++];
     } else {
         ps->eof = true;
-        return NO_TOKEN;
+        return NULL;
     }
 }
 
-MaybeToken ps_peek(Parser* ps) {
-    if (ps->cur < ps->tokens_len) {
-        return HAVE_TOKEN(&ps->tokens[ps->cur]);
+Token* ps_peek(Parser* ps) {
+    if (IN_BOUNDS) {
+        return &ps->tokens[ps->cur];
     } else {
         ps->eof = true;
-        return NO_TOKEN;
+        return NULL;
     }
 }
 
-MaybeToken ps_peek_next(Parser* ps) {
+Token* ps_peek_next(Parser* ps) {
     if (ps->cur + 1 < ps->tokens_len) {
-        return HAVE_TOKEN(&ps->tokens[ps->cur + 1]);
+        return &ps->tokens[ps->cur + 1];
     } else {
         ps->eof = true;
-        return NO_TOKEN;
+        return NULL;
     }
 }
 
-MaybeToken ps_prev(Parser* ps) {
+Token* ps_prev(Parser* ps) {
     if (ps->cur - 1 < ps->tokens_len) {
-        return HAVE_TOKEN(&ps->tokens[ps->cur - 1]);
+        return &ps->tokens[ps->cur - 1];
     } else {
         ps->eof = true;
-        return NO_TOKEN;
+        return NULL;
     }
 }
 
-MaybeToken ps_get(Parser* ps, usize idx) {
+Token* ps_get(Parser* ps, usize idx) {
     if (idx < ps->tokens_len) {
-        return HAVE_TOKEN(&ps->tokens[idx]);
+        return &ps->tokens[idx];
     } else {
         ps->eof = true;
-        return NO_TOKEN;
+        return NULL;
     }
 }
 
-MaybeToken ps_peek_and_expect(Parser* ps, TokenKind expected) {
+Token* ps_peek_and_expect(Parser* ps, TokenKind expected) {
     const char* expected_s = token_kind_string(expected);
-    if_let(Token*, t, ps_peek(ps)) {
+
+    Token* t = ps_peek(ps);
+    if (t) {
         if (t->kind == TOK_EOF) {
             ps_diag(ps, "expected token %s, but reached end of file",
                     token_kind_string(expected));
@@ -75,49 +77,52 @@ MaybeToken ps_peek_and_expect(Parser* ps, TokenKind expected) {
             ps_diag(ps, "expected token %s, but found %s",
                     token_kind_string(t->kind), expected_s);
         } else {
-            return HAVE_TOKEN(t);
+            return t;
         }
-        return NO_TOKEN;
+        return NULL;
     }
 
     ps_diag(ps, "expected token %s, but got no token", expected_s);
-    return NO_TOKEN;
+    return NULL;
 }
 
 bool ps_check(Parser* ps, TokenKind expected) {
-    if_let(Token*, t, ps_peek(ps)) {
+    Token* t = ps_peek(ps);
+    if (t) {
         return t->kind == expected;
     }
     return false;
 }
 
-MaybeToken ps_check_and_consume(Parser* ps, TokenKind expected) {
+Token* ps_check_and_consume(Parser* ps, TokenKind expected) {
     if (ps_check(ps, expected)) {
         return ps_consume(ps);
     } else {
-        return NO_TOKEN;
+        return NULL;
     }
 }
 
-MaybeToken ps_consume_and_expect(Parser* ps, TokenKind expected) {
+Token* ps_consume_and_expect(Parser* ps, TokenKind expected) {
     const char* expected_s = token_kind_string(expected);
-    if_let(Token*, t, ps_consume(ps)) {
+    Token* t = ps_consume(ps);
+    if (t) {
         if (t->kind != expected) {
             ps_diag(ps, "expected token \"%s\" but got \"%s\"", expected_s,
                     token_kind_string(t->kind));
         } else {
-            return HAVE_TOKEN(t);
+            return t;
         }
-        return NO_TOKEN;
+        return NULL;
     }
 
     ps_diag(ps, "expected token \"%s\" but reached the end of the token stream",
             expected_s);
-    return NO_TOKEN;
+    return NULL;
 }
 
 Pos ps_get_pos(Parser* ps) {
-    if_let(Token*, t, ps_peek(ps)) {
+    Token* t = ps_peek(ps);
+    if (t) {
         return t->pos;
     }
 
@@ -163,9 +168,10 @@ bool ps_bump_error_count(Parser* ps) {
 }
 
 void ps_diag_expected(Parser* ps, const char* thing) {
-    if_let(Token*, tok, ps_peek(ps)) {
-        ps_diag(ps, "expected %s, but found token \"%s\"",
-                token_kind_string(tok->kind));
+    Token* t = ps_peek(ps);
+    if (t) {
+        ps_diag(ps, "expected %s, but found token \"%s\"", thing,
+                token_kind_string(t->kind));
         return;
     }
 

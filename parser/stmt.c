@@ -29,8 +29,8 @@ static bool ps_output_stmt(Parser* ps) {
 
     if (!ps_check(ps, TOK_OUTPUT) && !ps_check(ps, TOK_PRINT))
         return false;
-    begin = ps_consume(ps).data;
 
+    begin = ps_consume(ps);
     if (ps_check(ps, TOK_NEWLINE))
         goto end;
     // call above it sets eof
@@ -46,7 +46,7 @@ static bool ps_output_stmt(Parser* ps) {
     }
 
     while (!ps_check(ps, TOK_NEWLINE) && !ps->eof) {
-        if (!ps_consume_and_expect(ps, TOK_COMMA).have) {
+        if (!ps_consume_and_expect(ps, TOK_COMMA)) {
             ps_skip_past_newline(ps);
             goto fail;
         }
@@ -58,6 +58,8 @@ static bool ps_output_stmt(Parser* ps) {
             av_append(&exprs, ps->expr);
         }
     }
+
+    (void)ps_check_and_consume(ps, TOK_NEWLINE);
 
     // TCC fix
     CB_OutputStmt output_stmt = {0};
@@ -74,10 +76,8 @@ fail:
 static bool ps_input_stmt(Parser* ps) {
     Token* begin = NULL;
 
-    if (!ps_check(ps, TOK_INPUT))
+    if (!(begin = ps_check_and_consume(ps, TOK_INPUT)))
         return false;
-
-    begin = ps_consume(ps).data;
 
     if (!ps_expr(ps)) {
         ps_diag_at(ps, begin->pos, "could not parse expression after INPUT");
@@ -108,7 +108,8 @@ bool ps_stmt(Parser* ps) {
 
     if (!ps->eof)
         ps_diag(ps, "unexpected token %s",
-                token_kind_string(ps_peek(ps).data->kind));
+                token_kind_string(ps_peek(ps)->kind));
+
     return false;
 }
 

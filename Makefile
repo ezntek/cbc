@@ -8,7 +8,7 @@ HEADERS = common.h a_vector.h a_string.h lexer.h ast.h ast_printer.h parser/pars
 
 CFLAGS = -Wall -Wextra -pedantic
 RELEASE_CFLAGS = -O2
-DEBUG_CFLAGS = -D_A_STRING_DEBUG -O0 -g -fno-stack-protector -fsanitize=address
+DEBUG_CFLAGS = -D_A_STRING_DEBUG -O0 -ggdb3 -fsanitize=address
 TARBALLFILES = Makefile LICENSE.md README.md 3rdparty $(SRC) $(HEADERS) main.c 
 
 TARGET=debug

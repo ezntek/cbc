@@ -36,15 +36,16 @@ typedef struct {
     CompilerWriterState writer_state;
     StringStorage ss;
     usize string_id;
+    usize label_id;
     usize id;
 } Compiler;
 
-typedef union {
-    char data[8];
-    u64 v;
+typedef struct {
+    u64 id;
+    CB_Type kind;
 } Val;
 
-Val val(const char* data);
+Val val(const char* data, CB_Type kind);
 
 Compiler cm_new(void);
 void cm_free(Compiler* c);

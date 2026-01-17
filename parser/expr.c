@@ -107,19 +107,19 @@ bool is_literal(TokenKind k) {
 }
 
 bool parse_literal(Parser* ps) {
-    MaybeToken peek = ps_peek(ps);
-    if (peek.have && !is_literal(peek.data->kind)) {
+    Token* peek = ps_peek(ps);
+    Token* t = NULL;
+
+    if (peek && !is_literal(peek->kind)) {
         return false;
     }
 
-    let_else(Token*, t, ps_consume(ps)) {
+    if (!(t = ps_consume(ps))) {
         ps_diag_at(ps, t->pos, "failed to get next literal");
         return false;
     }
 
-    Token* t = ps_prev(ps).data;
     a_string* s = &t->data.string;
-
     switch (t->kind) {
         case TOK_NULL: {
             ps->expr = cb_expr_new_literal(t->pos, cb_value_new_null());
@@ -244,12 +244,12 @@ bool parse_literal(Parser* ps) {
 
 bool parse_primary(Parser* ps) {
     if (ps_check(ps, TOK_LPAREN)) {
-        Token* t = ps_consume(ps).data;
+        Token* t = ps_consume(ps);
         if (!ps_expr(ps)) {
             diag_token(t, "invalid expression inside grouping");
         }
         ps->expr = cb_expr_new_unary(t->pos, CB_EXPR_GROUPING, ps->expr);
-        if (!ps_consume_and_expect(ps, TOK_RPAREN).have) {
+        if (!ps_consume_and_expect(ps, TOK_RPAREN)) {
             return false; // XXX: are we sure we reported it?
         }
         return true;
@@ -263,7 +263,7 @@ bool parse_primary(Parser* ps) {
     }
 
     if (ps_check(ps, TOK_IDENT)) {
-        Token* p = ps_consume(ps).data;
+        Token* p = ps_consume(ps);
         ps->expr = cb_expr_new_ident(p->pos, p->data.string);
         return true;
     }
@@ -294,13 +294,13 @@ bool can_start_primary_unary(TokenKind k) {
 }
 
 bool parse_postfix(Parser* ps) {
-    MaybeToken peek = ps_peek(ps);
-    if (!peek.have) {
+    Token* peek = ps_peek(ps);
+    if (!peek) {
         return false;
     }
 
     if (!parse_primary(ps)) {
-        ps_diag_at(ps, peek.data->pos, "could not parse primary expression");
+        ps_diag_at(ps, peek->pos, "could not parse primary expression");
         return false;
     }
 
@@ -308,30 +308,32 @@ bool parse_postfix(Parser* ps) {
         if (ps->eof)
             break;
 
-        if_let(Token*, t, ps_peek(ps)) {
-            switch (t->kind) {
-                case TOK_CARET: {
-                    MaybeToken next = ps_peek_next(ps);
-                    if (next.have && can_start_primary_unary(next.data->kind)) {
-                        // infix, ignore
-                        goto done;
-                    } else {
-                        (void)ps_consume(ps);
-                        ps->expr = cb_expr_new_unary(ps_get_pos(ps),
-                                                     CB_EXPR_DEREF, ps->expr);
-                    }
-                } break;
-                case TOK_LPAREN: {
-                    // TODO: function call
-                } break;
-                case TOK_LBRACKET: {
-                    // TODO: array index
-                } break;
-                case TOK_DOT: {
-                    // TODO: struct access
-                } break;
-                default: goto done;
-            }
+        Token* t = ps_peek(ps);
+        if (!t)
+            break;
+
+        switch (t->kind) {
+            case TOK_CARET: {
+                Token* next = ps_peek_next(ps);
+                if (next && can_start_primary_unary(next->kind)) {
+                    // infix, ignore
+                    goto done;
+                } else {
+                    (void)ps_consume(ps);
+                    ps->expr = cb_expr_new_unary(ps_get_pos(ps), CB_EXPR_DEREF,
+                                                 ps->expr);
+                }
+            } break;
+            case TOK_LPAREN: {
+                // TODO: function call
+            } break;
+            case TOK_LBRACKET: {
+                // TODO: array index
+            } break;
+            case TOK_DOT: {
+                // TODO: struct access
+            } break;
+            default: goto done;
         }
     } while (1);
 done:
@@ -347,30 +349,33 @@ static const CB_ExprKind UNARY_OP_TABLE[] = {
 };
 
 bool parse_unary(Parser* ps) {
-    if_let(Token*, t, ps_peek(ps)) {
-        // prefix ops
-        switch (t->kind) {
-            case TOK_SUB:
-            case TOK_CARET:
-            case TOK_NOT:
-            case TOK_BITNOT: {
-                Pos p = ps_consume(ps).data->pos;
-                if (!parse_unary(ps)) {
-                    ps_diag(ps, "could not parse expression after %s",
-                            token_kind_string(t->kind));
-                    return false;
-                }
-                ps->expr =
-                    cb_expr_new_unary(p, UNARY_OP_TABLE[t->kind], ps->expr);
-            } break;
-            default: break;
-        }
-        // if we still have tokens to postfix
-        if (!ps->eof && can_start_primary_unary(ps_peek(ps).data->kind))
-            return parse_postfix(ps);
-        else // assume everything OK
-            return true;
+    Token* t = ps_peek(ps);
+    if (!t)
+        return false;
+
+    // prefix ops
+    switch (t->kind) {
+        case TOK_SUB:
+        case TOK_CARET:
+        case TOK_NOT:
+        case TOK_BITNOT: {
+            Pos p = ps_consume(ps)->pos;
+            if (!parse_unary(ps)) {
+                ps_diag(ps, "could not parse expression after %s",
+                        token_kind_string(t->kind));
+                return false;
+            }
+            ps->expr = cb_expr_new_unary(p, UNARY_OP_TABLE[t->kind], ps->expr);
+        } break;
+        default: break;
     }
+
+    // if we still have tokens to postfix
+    if (!ps->eof && can_start_primary_unary(ps_peek(ps)->kind))
+        return parse_postfix(ps);
+    else // assume everything OK
+        return true;
+
     // we probably hit EOF
     return false;
 }
@@ -403,12 +408,12 @@ bool parse_binary(Parser* ps, u8 min_prec) {
         return false;
 
     CB_Expr left = ps->expr;
-    MaybeToken peek = {0};
+    Token* peek = {0};
     TokenKind kind = {0};
     u8 cur_prec = 0;
 
-    while ((peek = ps_peek(ps)).have &&
-           (cur_prec = PRECS[(kind = peek.data->kind)]) != 0 &&
+    while ((peek = ps_peek(ps)) &&
+           (cur_prec = PRECS[(kind = peek->kind)]) != 0 &&
            PRECS[kind] >= min_prec) {
 
         (void)ps_consume(ps);
@@ -417,7 +422,7 @@ bool parse_binary(Parser* ps, u8 min_prec) {
             return false;
 
         // the newly parsed rhs sohuld be in ps->expr
-        left = cb_expr_new_binary(peek.data->pos, BINARY_OP_TABLE[kind], left,
+        left = cb_expr_new_binary(peek->pos, BINARY_OP_TABLE[kind], left,
                                   ps->expr);
     }
 

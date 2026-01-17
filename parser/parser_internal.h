@@ -14,28 +14,16 @@
 #include "../lexer_types.h"
 #include "parser.h"
 
-typedef struct {
-    Token* data;
-    bool have;
-} MaybeToken;
-
-#define HAVE_TOKEN(t)                                                          \
-    (MaybeToken) {                                                             \
-        .data = (t), .have = true                                              \
-    }
-
-#define NO_TOKEN (MaybeToken){0}
-
 // utility functions
-MaybeToken ps_peek(Parser* ps);
-MaybeToken ps_consume(Parser* ps);
-MaybeToken ps_prev(Parser* ps);
-MaybeToken ps_peek_next(Parser* ps);
-MaybeToken ps_get(Parser* ps, usize idx);
-MaybeToken ps_peek_and_expect(Parser* ps, TokenKind expected);
+Token* ps_peek(Parser* ps);
+Token* ps_consume(Parser* ps);
+Token* ps_prev(Parser* ps);
+Token* ps_peek_next(Parser* ps);
+Token* ps_get(Parser* ps, usize idx);
+Token* ps_peek_and_expect(Parser* ps, TokenKind expected);
+Token* ps_check_and_consume(Parser* ps, TokenKind expected);
+Token* ps_consume_and_expect(Parser* ps, TokenKind expected);
 bool ps_check(Parser* ps, TokenKind expected);
-MaybeToken ps_check_and_consume(Parser* ps, TokenKind expected);
-MaybeToken ps_consume_and_expect(Parser* ps, TokenKind expected);
 Pos ps_get_pos(Parser* ps);
 bool ps_bump_error_count(Parser* ps);
 void ps_diag(Parser* ps, const char* format, ...);

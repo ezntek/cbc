@@ -192,37 +192,38 @@ const char* token_kind_string(TokenKind k) {
 }
 
 void token_print_long(Token* t) {
-    printf("token[%d, %d, %d]: ", t->pos.row, t->pos.col, t->pos.span);
+    eprintf("token[%d, %d, %d]: ", t->pos.row, t->pos.col, t->pos.span);
 
     const a_string* s = &t->data.string;
     switch (t->kind) {
         case TOK_IDENT: {
-            printf("(%.*s)", as_fmtp(s));
+            eprintf("(%.*s)", as_fmtp(s));
         } break;
         case TOK_LITERAL_STRING: {
-            printf("\"%.*s\"", as_fmtp(s));
+            eprintf("\"%.*s\"", as_fmtp(s));
         } break;
         case TOK_LITERAL_CHAR: {
-            printf("'%.*s'", as_fmtp(s));
+            eprintf("'%.*s'", as_fmtp(s));
         } break;
         case TOK_LITERAL_NUMBER: {
-            printf("%.*s", as_fmtp(s));
+            eprintf("%.*s", as_fmtp(s));
         } break;
         case TOK_LITERAL_BOOLEAN: {
-            if (t->data.boolean)
-                printf("<true>");
-            else
-                printf("<false>");
+            if (t->data.boolean) {
+                eprintf("<true>");
+            } else {
+                eprintf("<false>");
+            }
         } break;
         default: token_print(t);
     }
 
-    putchar('\n');
+    fputc('\n', stderr);
 }
 
 void token_print(Token* t) {
     const char* s = token_kind_string(t->kind);
-    printf("<%s>", s);
+    eprintf("<%s>", s);
 }
 
 // lexer stuff
@@ -450,7 +451,9 @@ static bool lx_next_word(Lexer* l, a_string* res) {
     u32 len = 0;
     const char DELIMS[] = "\"'";
     bool delimited_literal = strchr(DELIMS, *begin);
+    bool num = isdigit(*begin);
     char delim = 0;
+
     if (delimited_literal) {
         delim = CUR;
         l->cur++;
@@ -466,7 +469,8 @@ static bool lx_next_word(Lexer* l, a_string* res) {
         if (delimited_literal)
             stop = CUR == delim;
         else
-            stop = lx_is_operator_start(CUR) || lx_is_separator(CUR) ||
+            stop = lx_is_operator_start(CUR) ||
+                   (lx_is_separator(CUR) && (num && CUR != '.')) ||
                    isspace(CUR) || strchr(DELIMS, CUR);
 
         if (CUR == '\\') {
@@ -486,7 +490,6 @@ static bool lx_next_word(Lexer* l, a_string* res) {
             l->error = ERROR(EOF, 1);
             return false;
         }
-
         if (CUR != delim) {
             if (strchr(DELIMS, CUR) != NULL)
                 l->error = ERROR(MISMATCHED_DELIMITER, len);

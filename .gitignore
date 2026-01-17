@@ -1,6 +1,7 @@
 3rdparty/*
 .vscode
 *.o
+*.out
 cbc
 *.core
 *.qbe

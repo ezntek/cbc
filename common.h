@@ -81,7 +81,7 @@ typedef double f64;
                 __LINE__, __func__, __FILE__);                                 \
         eprintf(__VA_ARGS__);                                                  \
         eprintf("\n");                                                         \
-        abort();                                                               \
+        *(int*)0 = 0;                                                          \
     } while (0)
 #else
 #define panic(...)                                                             \
