@@ -20,7 +20,7 @@
 #include "ast.h"
 #include "ast_printer.h"
 #include "common.h"
-#include "compiler.h"
+#include "compiler/compiler.h"
 #include "lexer.h"
 #include "parser/parser.h"
 
@@ -48,7 +48,7 @@ static const struct option LONG_OPTS[] = {
 void help(void);
 bool parse_args(int argc, char** argv);
 void init(int argc, char** argv);
-bool compile(void);
+void compile(void);
 void deinit(void);
 
 static Args args;
@@ -110,7 +110,7 @@ static CB_Program prog;
 static AstPrinter printer;
 static Compiler comp;
 
-bool compile(void) {
+void compile(void) {
     if (!args.has_in_path) {
         file_name = astr("(stdin)");
         file_content = as_new();
@@ -127,7 +127,7 @@ bool compile(void) {
 
     toks = (Tokens){0};
     if (!lx_tokenize(&l, &toks))
-        return false;
+        return;
 
     if (args.debug) {
         eprintf("\x1b[2m=== TOKENS ===\n");
@@ -141,7 +141,7 @@ bool compile(void) {
 
     if (!ps_program(&ps, &prog)) {
         eprintf("error\n");
-        return false;
+        return;
     }
 
     if (args.debug) {
@@ -157,12 +157,13 @@ bool compile(void) {
         comp = cm_new();
     }
 
-    cm_program(&comp, &prog);
+    if (cm_program(&comp, &prog, &file_name))
+        return;
 
-    if (args.has_out_path)
+    if (args.has_in_path)
         eprintf("Compiled %.*s\n", as_fmt(args.in_path));
 
-    return true;
+    return;
 }
 
 void deinit(void) {

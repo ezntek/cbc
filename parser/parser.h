@@ -22,12 +22,12 @@ typedef struct {
     usize tokens_len;
     a_string file_name;
     usize cur;
-    u32 error_count;
-    bool error_reported;
-    bool eof;
     // used as return values
     CB_Stmt stmt;
     CB_Expr expr;
+    u32 error_count;
+    // eof marker
+    bool eof;
 } Parser;
 
 // requires toks to be a valid pointer, ownership of file_name will be taken

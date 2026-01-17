@@ -143,9 +143,9 @@ void ps_diag_at(Parser* ps, Pos pos, const char* format, ...) {
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
+    fputc('\n', stderr);
 
-    putchar('\n');
-    ps->error_reported = true;
+    ps->error_count++;
 }
 
 void ps_diag(Parser* ps, const char* format, ...) {
@@ -158,13 +158,9 @@ void ps_diag(Parser* ps, const char* format, ...) {
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
+    fputc('\n', stderr);
 
-    putchar('\n');
-    ps->error_reported = true;
-}
-
-bool ps_bump_error_count(Parser* ps) {
-    return ++ps->cur > MAX_ERROR_COUNT;
+    ps->error_count++;
 }
 
 void ps_diag_expected(Parser* ps, const char* thing) {

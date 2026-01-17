@@ -15,9 +15,8 @@
 
 typedef struct {
     u32 row;
-    u16 file_id;
-    u8 col;
-    u8 span;
+    u32 col;
+    u16 span;
 } Pos;
 
 typedef enum {

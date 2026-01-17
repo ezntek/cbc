@@ -131,12 +131,12 @@ bool ps_program(Parser* ps, CB_Program* out) {
             ps_skip_past_newline(ps);
 
         if (ps->error_count > MAX_ERROR_COUNT) {
-            ps_diag(ps, "too many errors, stopping here");
+            ps_diag(ps, "too many errors reported, stopping now.");
             goto fail;
         }
     }
 
-    if (ps->error_reported)
+    if (ps->error_count)
         goto fail;
 
     *out = cb_program_new(s.data, s.len);

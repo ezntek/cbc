@@ -24,6 +24,7 @@ typedef enum {
     CB_PRIM_BOOLEAN,
     CB_PRIM_CHAR,
     CB_PRIM_STRING,
+
     // not for use.
     // (CB_Type)type < CB_PRIM_CUSTOM => primitive type
     // (CB_Type)type > CB_PRIM_CUSTOM => custom type

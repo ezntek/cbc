@@ -2,9 +2,9 @@ CC ?= cc
 LD ?= ld
 INCLUDE = 
 
-SRC = a_string.c lexer.c ast.c ast_printer.c parser/parser.c parser/expr.c parser/stmt.c compiler.c
+SRC = a_string.c lexer.c ast.c ast_printer.c parser/parser.c parser/expr.c parser/stmt.c compiler/compiler.c compiler/expr.c compiler/stmt.c
 OBJ = $(SRC:.c=.o)
-HEADERS = common.h a_vector.h a_string.h lexer.h ast.h ast_printer.h parser/parser.h compiler.h
+HEADERS = common.h a_vector.h a_string.h lexer.h ast.h ast_printer.h parser/parser.h parser/parser_internal.h compiler/compiler.h compiler/compiler_internal.h
 
 CFLAGS = -Wall -Wextra -pedantic
 RELEASE_CFLAGS = -O2

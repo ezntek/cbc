@@ -25,7 +25,6 @@ Token* ps_check_and_consume(Parser* ps, TokenKind expected);
 Token* ps_consume_and_expect(Parser* ps, TokenKind expected);
 bool ps_check(Parser* ps, TokenKind expected);
 Pos ps_get_pos(Parser* ps);
-bool ps_bump_error_count(Parser* ps);
 void ps_diag(Parser* ps, const char* format, ...);
 void ps_diag_expected(Parser* ps, const char* thing);
 void ps_diag_at(Parser* ps, Pos pos, const char* format, ...);

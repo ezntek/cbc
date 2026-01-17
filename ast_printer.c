@@ -54,8 +54,8 @@ static const char* expr_kind_string(CB_ExprKind k) {
     const char* res = EXPR_KIND_STRINGS[k];
     if (res)
         return res;
-    else
-        panic("invalid expr kind %d passed to string", (i32)k);
+
+    panic("invalid expr kind %d passed to string", (i32)k);
 }
 
 void ap_write_stdout(AstPrinter* p, const char* data) {

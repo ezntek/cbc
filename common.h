@@ -82,6 +82,7 @@ typedef double f64;
         eprintf(__VA_ARGS__);                                                  \
         eprintf("\n");                                                         \
         *(int*)0 = 0;                                                          \
+        exit(1);                                                               \
     } while (0)
 #else
 #define panic(...)                                                             \

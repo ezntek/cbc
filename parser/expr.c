@@ -258,7 +258,7 @@ bool parse_primary(Parser* ps) {
     if (parse_literal(ps)) {
         return true;
     } else {
-        if (ps->error_reported)
+        if (ps->error_count)
             return false;
     }
 
