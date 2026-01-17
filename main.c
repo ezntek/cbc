@@ -129,11 +129,13 @@ bool compile(void) {
     if (!lx_tokenize(&l, &toks))
         return false;
 
-    printf("\x1b[2m=== TOKENS ===\n");
-    for (usize i = 0; i < toks.len; i++) {
-        token_print_long(&toks.data[i]);
+    if (args.debug) {
+        printf("\x1b[2m=== TOKENS ===\n");
+        for (usize i = 0; i < toks.len; i++) {
+            token_print_long(&toks.data[i]);
+        }
+        printf("==============\x1b[0m\n");
     }
-    printf("==============\x1b[0m\n");
 
     ps = ps_new(toks.data, toks.len, as_dupe(&file_name));
 
@@ -142,15 +144,19 @@ bool compile(void) {
         return false;
     }
 
-    printer = ap_new();
-    ap_visit_program(&printer, &prog);
-    putchar('\n');
+    if (args.debug) {
+        printer = ap_new();
+        ap_visit_program(&printer, &prog);
+        putchar('\n');
+    }
 
     const char* out_name = args.has_out_path ? args.out_path.data : "out.qbe";
     if (!cm_new_with_file_writer(out_name, &comp))
         panic("could not open %s", out_name);
 
     cm_program(&comp, &prog);
+
+    eprintf("Compiled %.*s to %s\n", as_fmt(args.in_path), out_name);
 
     return true;
 }

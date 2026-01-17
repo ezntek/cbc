@@ -39,11 +39,9 @@ typedef struct {
     usize id;
 } Compiler;
 
-typedef struct {
-    union {
-        char data[8];
-        u64 v;
-    };
+typedef union {
+    char data[8];
+    u64 v;
 } Val;
 
 Val val(const char* data);

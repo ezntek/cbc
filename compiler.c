@@ -113,17 +113,20 @@ static void cm_writef(Compiler* c, const char* restrict format, ...) {
 }
 
 static char name_buf[8] = {0};
+
 static Val cm_literal(Compiler* c, CB_Value* e) {
     switch (e->kind) {
         case CB_PRIM_STRING: {
             usize idx = c->ss.len;
             av_append(&c->ss, as_slice_cstr(e->string.data, 0, e->string.len));
-            snprintf(name_buf, 7, "$s%zu", idx);
+            snprintf(name_buf, 8, "$s%zX", idx);
             Val res = val(name_buf);
             return res;
         } break;
-        default:
+        default: {
             panic("not implemented");
+        } break;
+
             /*
             case CB_PRIM_INTEGER: {
 
