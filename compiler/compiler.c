@@ -172,10 +172,8 @@ static const char* PRIM_TYPE_TABLE[] = {
 };
 
 const char* type_string(CB_Type t) {
-    const char* s = PRIM_TYPE_TABLE[t];
-
-    if (s)
-        strcpy(type_string_buf, s);
+    if (inrange(t, CB_PRIM_NULL, CB_PRIM_STRING))
+        strcpy(type_string_buf, PRIM_TYPE_TABLE[t]);
     else
         snprintf(type_string_buf, TYPE_STRING_BUFSZ, "Type %u", (u32)t);
 

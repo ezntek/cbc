@@ -15,6 +15,45 @@
 #include <stdlib.h> // macro
 #include <string.h> // macro
 
+static const char* EXPR_KIND_STRINGS[] = {
+    [CB_EXPR_LIT] = "lit",
+    [CB_EXPR_IDENT] = "ident",
+    [CB_EXPR_NEGATION] = "neg",
+    [CB_EXPR_NOT] = "not",
+    [CB_EXPR_GROUPING] = "grouping",
+    [CB_EXPR_TYPECAST] = "typecast",
+    [CB_EXPR_FNCALL] = "fncall",
+    [CB_EXPR_ADD] = "add",
+    [CB_EXPR_SUB] = "sub",
+    [CB_EXPR_MUL] = "mul",
+    [CB_EXPR_DIV] = "div",
+    [CB_EXPR_POW] = "pow",
+    [CB_EXPR_DEREF] = "deref",
+    [CB_EXPR_REF] = "ref",
+    [CB_EXPR_BITNOT] = "bitnot",
+    [CB_EXPR_LT] = "lt",
+    [CB_EXPR_GT] = "gt",
+    [CB_EXPR_LEQ] = "leq",
+    [CB_EXPR_GEQ] = "geq",
+    [CB_EXPR_EQ] = "eq",
+    [CB_EXPR_NEQ] = "neq",
+    [CB_EXPR_SHL] = "shl",
+    [CB_EXPR_SHR] = "shr",
+    [CB_EXPR_OR] = "or",
+    [CB_EXPR_AND] = "and",
+    [CB_EXPR_BITOR] = "bitor",
+    [CB_EXPR_BITAND] = "bitand",
+    [CB_EXPR_BITXOR] = "bitxor",
+};
+
+const char* expr_kind_string(CB_ExprKind k) {
+    // TODO: do a range check instead
+    if (inrange(k, CB_EXPR_LIT, CB_EXPR_BITXOR))
+        return EXPR_KIND_STRINGS[k];
+
+    panic("invalid expr kind %d passed to string", (i32)k);
+}
+
 CB_ArrayType cb_array_type_new(CB_Type kind, const CB_ArrayTypeDim* dims,
                                u16 dims_count) {
     dupe_slice(CB_ArrayTypeDim, new_dims, dims, dims_count);

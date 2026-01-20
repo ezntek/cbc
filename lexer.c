@@ -433,7 +433,7 @@ static bool lx_next_single_symbol(Lexer* l) {
     };
 
     TokenKind t;
-    if ((t = TABLE[(int)CUR]) == 0)
+    if ((t = TABLE[(i8)CUR]) == 0)
         return false;
 
     l->token = (Token){
@@ -712,7 +712,9 @@ static const char* LEXER_ERROR_TABLE[] = {
 };
 
 const char* lx_strerror(LexerErrorKind k) {
-    return LEXER_ERROR_TABLE[k];
+    return inrange(k, LX_ERROR_NULL, LX_ERROR_CHAR_LITERAL_TOO_LONG)
+               ? LEXER_ERROR_TABLE[k]
+               : NULL;
 }
 
 a_string lx_as_strerror(LexerErrorKind k) {

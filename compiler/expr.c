@@ -121,28 +121,125 @@ fail:
     return (Val){0};
 }
 
+#define kind_is_numeric(k) ((k) == CB_PRIM_INTEGER || (k) == CB_PRIM_REAL)
+
+const char TYPE_TABLE[] = {
+    [CB_PRIM_NULL] = 'w', [CB_PRIM_INTEGER] = 'l',
+    [CB_PRIM_REAL] = 'd', [CB_PRIM_BOOLEAN] = 'w',
+    [CB_PRIM_CHAR] = 'w', [CB_PRIM_STRING] = 'l', // TODO: string stuff
+};
+
 Val cm_binary(Compiler* c, CB_Expr* e) {
-    Val lhs_v = cm_expr(c, e->unary), rhs_v = cm_expr(c, e->unary);
+    Val lhs = cm_expr(c, e->lhs), rhs = cm_expr(c, e->rhs);
     Pos lhs_pos = e->lhs->pos, rhs_pos = e->rhs->pos;
 
-    if (!lhs_v.have)
+    if (!lhs.have)
         goto fail;
 
-    if (!rhs_v.have)
+    if (!rhs.have)
         goto fail;
+
+    if (lhs.kind > CB_PRIM_CUSTOM || rhs.kind > CB_PRIM_CUSTOM) {
+        cm_diag(c, e->pos, "custom types not implemented for binary exprs!");
+        goto fail;
+    }
 
     switch (e->kind) {
         case CB_EXPR_ADD: {
+            if (lhs.kind == CB_PRIM_STRING || rhs.kind == CB_PRIM_STRING) {
+                panic("string concatenation not implemented");
+                goto start_compiling; // we don't wanna trigger the bottom
+                                      // numeric check
+            }
+        } // fallthrough
+        case CB_EXPR_SUB:
+        case CB_EXPR_MUL:
+        case CB_EXPR_DIV:
+        case CB_EXPR_POW:
+        case CB_EXPR_LT:
+        case CB_EXPR_GT:
+        case CB_EXPR_LEQ:
+        case CB_EXPR_GEQ: {
+            if (!kind_is_numeric(lhs.kind) || !kind_is_numeric(rhs.kind))
+                goto type_error;
+        } break;
+        case CB_EXPR_SHL:
+        case CB_EXPR_SHR: {
+            if (lhs.kind != CB_PRIM_INTEGER || rhs.kind != CB_PRIM_INTEGER)
+                goto type_error;
+        } break;
+        case CB_EXPR_AND:
+        case CB_EXPR_OR: {
+            if (lhs.kind != CB_PRIM_BOOLEAN || rhs.kind != CB_PRIM_BOOLEAN)
+                goto type_error;
+        } break;
+        case CB_EXPR_BITOR:
+        case CB_EXPR_BITAND:
+        case CB_EXPR_BITXOR: {
             panic("not implemented");
+        } break;
+        default: {
+            panic("not implemented");
+        } break;
+    }
+
+start_compiling:
+    usize id = c->id++;
+
+    // gotta figure the types out
+    CB_Type res_kind = lhs.kind;
+    char ct = TYPE_TABLE[res_kind];
+
+    // do integer-real promotion
+    // if it happens, we steal the current id and make a new one
+    if (lhs.kind == CB_PRIM_INTEGER && rhs.kind == CB_PRIM_REAL) {
+        lhs.kind = CB_PRIM_REAL;
+
+        cm_writefln(c, "%%r%zu =d sltof %%r%zu", id, lhs.id);
+        lhs.id = id++; // we need a new one afterwards
+
+        res_kind = CB_PRIM_REAL;
+        ct = TYPE_TABLE[CB_PRIM_REAL];
+    } else if (lhs.kind == CB_PRIM_REAL && rhs.kind == CB_PRIM_INTEGER) {
+        rhs.kind = CB_PRIM_REAL;
+
+        cm_writefln(c, "%%r%zu =d sltof %%r%zu", id, rhs.id);
+        rhs.id = id++; // we need a new one now
+
+        res_kind = CB_PRIM_REAL;
+        ct = TYPE_TABLE[CB_PRIM_REAL];
+    }
+
+    switch (e->kind) {
+        case CB_EXPR_ADD: {
+            if (lhs.kind == CB_PRIM_STRING || rhs.kind == CB_PRIM_STRING) {
+                panic("string concatenation not implemented");
+            }
+
+            cm_writefln(c, "%%r%zu =%c add %%r%zu, %%r%zu", id, ct, lhs.id,
+                        rhs.id);
         } break;
         case CB_EXPR_SUB: {
-            panic("not implemented");
+            cm_writefln(c, "%%r%zu =%c sub %%r%zu, %%r%zu", id, ct, lhs.id,
+                        rhs.id);
         } break;
         case CB_EXPR_MUL: {
-            panic("not implemented");
+            cm_writefln(c, "%%r%zu =%c mul %%r%zu, %%r%zu", id, ct, lhs.id,
+                        rhs.id);
         } break;
         case CB_EXPR_DIV: {
-            panic("not implemented");
+            if (lhs.kind == CB_PRIM_INTEGER) {
+                lhs.kind = CB_PRIM_REAL;
+                cm_writefln(c, "%%r%zu =d sltof %%r%zu", id, lhs.id);
+                lhs.id = id++;
+            }
+            if (rhs.kind == CB_PRIM_INTEGER) {
+                rhs.kind = CB_PRIM_REAL;
+                cm_writefln(c, "%%r%zu =d sltof %%r%zu", id, rhs.id);
+                rhs.id = id++;
+            }
+            res_kind = CB_PRIM_REAL;
+            cm_writefln(c, "%%r%zu =d div %%r%zu, %%r%zu", id, lhs.id, rhs.id);
         } break;
         case CB_EXPR_POW: {
             panic("not implemented");
@@ -186,8 +283,15 @@ Val cm_binary(Compiler* c, CB_Expr* e) {
         case CB_EXPR_BITXOR: {
             panic("not implemented");
         } break;
+        default: panic("tried to compile non binary expr as binary");
     }
 
+    return val(id, res_kind);
+type_error:
+    cm_diag(c, e->pos,
+            "cannot perform binary operation %s with types %s and %s!",
+            expr_kind_string(e->kind), type_string(lhs.kind),
+            type_string(rhs.kind));
 fail:
     return (Val){0};
 }

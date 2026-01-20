@@ -112,6 +112,8 @@ typedef enum {
     (CB_EXPR_NEGATION <= (k) && (k) <= CB_EXPR_DEREF)
 #define cb_expr_kind_is_binary(k) (CB_EXPR_ADD <= (k) && (k) <= CB_EXPR_BITXOR)
 
+const char* expr_kind_string(CB_ExprKind k);
+
 typedef struct CB_Expr CB_Expr;
 typedef struct CB_Expr {
     CB_ExprKind kind;

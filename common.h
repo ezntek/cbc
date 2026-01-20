@@ -171,6 +171,8 @@ typedef double f64;
 
 #define let(id, expr) ((id = (expr).data, (expr)).have)
 
+#define inrange(x, lower, higher) ((lower) <= (x) && (x) <= (higher))
+
 #define VERSION "0.1.0"
 
 #endif
