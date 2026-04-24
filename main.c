@@ -150,17 +150,20 @@ void compile(void) {
         putchar('\n');
     }
 
-    if (args.has_out_path) {
-        if (!cm_new_with_file_writer(args.out_path.data, &comp))
-            panic("could not open %s", args.out_path.data);
-    } else {
-        comp = cm_new();
-    }
-
-    if (cm_program(&comp, &prog, &file_name))
+    comp = cm_new();
+    a_string out = {0};
+    if (!cm_program(&comp, &out, &prog, &file_name))
         return;
 
-    if (args.has_in_path)
+    if (args.has_out_path) {
+        FILE* fp = fopen(args.out_path.data, "w");
+        fwrite(out.data, 1, out.len, fp);
+        fclose(fp);
+    } else {
+        printf("%.*s\n", as_fmt(out));
+    }
+
+    if (args.has_out_path)
         eprintf("Compiled %.*s\n", as_fmt(args.in_path));
 
     return;

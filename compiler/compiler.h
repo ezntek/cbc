@@ -11,6 +11,7 @@
 #ifndef _COMPILER_H
 #define _COMPILER_H
 
+#include "../3rdparty/uthash.h"
 #include "../a_vector.h"
 #include "../ast.h"
 #include "../common.h"
@@ -22,20 +23,22 @@ typedef enum {
 } CompilerWriterMode;
 
 // array of owned slices
-AV_DECL(a_string, StringStorage)
+AV_DECL(a_string, StringArray)
 
 typedef struct {
-    CompilerWriterMode mode;
-    union {
-        FILE* fp; // NULL if file writer not used
-        a_string buf;
-    };
-} CompilerWriterState;
+    char* name;
+    usize len;
+    CB_Type typ;
+    // doesn't actually make the struct bigger
+    bool is_const;
+    UT_hash_handle hh;
+} VarDecl;
 
 typedef struct {
-    CompilerWriterState writer_state;
-    StringStorage ss;
+    a_string out;
     a_string file_name;
+    StringArray ss; // string storage
+    VarDecl* vt;    // var table
     usize string_id;
     usize label_id;
     usize id;
@@ -53,12 +56,16 @@ void cm_free(Compiler* c);
 
 void cm_diag(Compiler* c, Pos pos, const char* restrict format, ...);
 
-bool cm_new_with_file_writer(const char* filename, Compiler* out);
-Compiler cm_new_with_string_writer();
+void cm_var_table_add(Compiler* c, const char* name, usize len, CB_Type typ,
+                      bool is_const);
+VarDecl* cm_var_table_find(Compiler* c, const char* name, usize len);
+void cm_var_table_delete(Compiler* c, const char* name, usize len);
+void cm_var_table_free(Compiler* c);
 
 Val cm_expr(Compiler* c, CB_Expr* e);
 void cm_stmt(Compiler* c, CB_Stmt* s);
 // NULL file name: not specified
-bool cm_program(Compiler* c, CB_Program* prog, a_string* file_name);
+bool cm_program(Compiler* c, a_string* out, CB_Program* prog,
+                a_string* file_name);
 
 #endif // _COMPILER_H

@@ -6,9 +6,9 @@
  * This source code form is licensed under the MIT/Expat license.
  * Visit the OSI website for a digital version.
  */
-#include <assert.h>
 #define _POSIX_C_SOURCE 200809L
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -330,6 +330,7 @@ void as_append_char(a_string* s, char c) {
     }
 
     s->data[s->len++] = c;
+    s->data[s->len] = 0;
 }
 
 void as_append_cstr(a_string* s, const char* n) {
@@ -347,18 +348,25 @@ void as_append_cstr(a_string* s, const char* n) {
         }
     }
 
-    for (usize i = 0; i < new_len; i++) {
-        s->data[s->len++] = n[i];
-    }
-    s->data[s->len] = '\0'; // null terminate it
+    strncat(s->data, n, new_len);
     s->len += new_len;
+    s->data[s->len] = '\0'; // null terminate it
 }
 
 void as_append_astr(a_string* s, const a_string* n) {
     if (!as_valid(n))
         panic("a_string to be appended cannot be NULL!");
 
-    as_append_cstr(s, n->data);
+    usize required_cap = s->len + n->len + 1;
+    if (required_cap > s->cap) {
+        while (s->cap < required_cap) {
+            as_reserve(s, s->cap * 2);
+        }
+    }
+
+    strncat(s->data, n->data, n->len);
+    s->len += n->len;
+    s->data[s->len] = '\0'; // null terminate it
 }
 
 void as_append(a_string* s, const char* n) {

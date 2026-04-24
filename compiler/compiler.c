@@ -14,6 +14,7 @@
 #include <stdlib.h> // used in macro
 #include <string.h>
 
+#include "../3rdparty/uthash.h"
 #include "../a_string.h"
 #include "../a_vector.h"
 #include "../ast.h"
@@ -22,44 +23,11 @@
 #include "compiler_internal.h"
 
 Compiler cm_new(void) {
-    Compiler res = {
-        .writer_state.mode = CM_WRITER_MODE_STDOUT,
-    };
-    return res;
-}
-
-bool cm_new_with_file_writer(const char* filename, Compiler* out) {
-    FILE* ptr = fopen(filename, "w");
-    if (!ptr) {
-        perror("fopen");
-        return false;
-    }
-
-    Compiler res = {0};
-    res.writer_state.fp = ptr;
-    res.writer_state.mode = CM_WRITER_MODE_FILE;
-
-    *out = res;
-    return true;
-}
-
-Compiler cm_new_with_string_writer() {
-    Compiler res = {0};
-    res.writer_state.buf = as_with_capacity(128);
-    res.writer_state.mode = CM_WRITER_MODE_STRING;
-    return res;
+    return (Compiler){.out = as_with_capacity(256)};
 }
 
 void cm_free(Compiler* c) {
-    switch (c->writer_state.mode) {
-        case CM_WRITER_MODE_FILE: {
-            fclose(c->writer_state.fp);
-        } break;
-        case CM_WRITER_MODE_STRING: {
-            as_free(&c->writer_state.buf);
-        } break;
-        default: break;
-    }
+    as_free(&c->out);
 
     for (usize i = 0; i < c->ss.len; i++) {
         as_free(&c->ss.data[i]);
@@ -86,35 +54,64 @@ void cm_diag(Compiler* c, Pos pos, const char* restrict format, ...) {
     c->error_count++;
 }
 
-// writer functions
+// var hash table functions
 
-void cm_write(Compiler* c, const char* s) {
-    switch (c->writer_state.mode) {
-        case CM_WRITER_MODE_STDOUT: {
-            printf("%s", s);
-        } break;
-        case CM_WRITER_MODE_FILE: {
-            fprintf(c->writer_state.fp, "%s", s);
-        } break;
-        case CM_WRITER_MODE_STRING: {
-            as_append_cstr(&c->writer_state.buf, s);
-        } break;
+void cm_var_table_add(Compiler* c, const char* name, usize len, CB_Type typ,
+                      bool is_const) {
+    VarDecl* entry;
+
+    HASH_FIND(hh, c->vt, name, len, entry);
+
+    if (!entry) {
+        entry = calloc(1, sizeof(VarDecl));
+        check_alloc(entry);
+        entry->name = calloc(len, 1);
+        check_alloc(entry->name);
+        memcpy(entry->name, name, len);
+        entry->len = len;
+
+        HASH_ADD_KEYPTR(hh, c->vt, entry->name, len, entry);
+    }
+
+    entry->typ = typ;
+    entry->is_const = is_const;
+}
+
+VarDecl* cm_var_table_find(Compiler* c, const char* name, usize len) {
+    VarDecl* entry;
+    HASH_FIND(hh, c->vt, name, len, entry);
+    return entry;
+}
+
+void cm_var_table_delete(Compiler* c, const char* name, usize len) {
+    VarDecl* entry = cm_var_table_find(c, name, len);
+    if (!entry)
+        return;
+
+    HASH_DEL(c->vt, entry);
+    free(entry->name);
+    free(entry);
+}
+
+void cm_var_table_free(Compiler* c) {
+    VarDecl *entry, *tmp;
+
+    HASH_ITER(hh, c->vt, entry, tmp) {
+        HASH_DEL(c->vt, entry);
+        free(entry->name);
+        free(entry);
     }
 }
 
+// writer functions
+
+void cm_write(Compiler* c, const char* s) {
+    as_append_cstr(&c->out, s);
+}
+
 void cm_writeln(Compiler* c, const char* s) {
-    switch (c->writer_state.mode) {
-        case CM_WRITER_MODE_STDOUT: {
-            printf("%s\n", s);
-        } break;
-        case CM_WRITER_MODE_FILE: {
-            fprintf(c->writer_state.fp, "%s\n", s);
-        } break;
-        case CM_WRITER_MODE_STRING: {
-            as_append_cstr(&c->writer_state.buf, s);
-            as_append_char(&c->writer_state.buf, '\n');
-        } break;
-    }
+    as_append_cstr(&c->out, s);
+    as_append_char(&c->out, '\n');
 }
 
 #define CM_WRITEF_MAXSIZE 1024
@@ -124,18 +121,8 @@ void cm_writef(Compiler* c, const char* restrict format, ...) {
     va_list lst;
     va_start(lst, format);
 
-    switch (c->writer_state.mode) {
-        case CM_WRITER_MODE_STDOUT: {
-            vprintf(format, lst);
-        } break;
-        case CM_WRITER_MODE_FILE: {
-            vfprintf(c->writer_state.fp, format, lst);
-        } break;
-        case CM_WRITER_MODE_STRING: {
-            vsnprintf(writef_buf, CM_WRITEF_MAXSIZE - 1, format, lst);
-            as_append_cstr(&c->writer_state.buf, writef_buf);
-        } break;
-    }
+    vsnprintf(writef_buf, CM_WRITEF_MAXSIZE - 1, format, lst);
+    as_append_cstr(&c->out, writef_buf);
 
     va_end(lst);
 }
@@ -144,21 +131,9 @@ void cm_writefln(Compiler* c, const char* restrict format, ...) {
     va_list lst;
     va_start(lst, format);
 
-    switch (c->writer_state.mode) {
-        case CM_WRITER_MODE_STDOUT: {
-            vprintf(format, lst);
-            putchar('\n');
-        } break;
-        case CM_WRITER_MODE_FILE: {
-            vfprintf(c->writer_state.fp, format, lst);
-            fprintf(c->writer_state.fp, "\n");
-        } break;
-        case CM_WRITER_MODE_STRING: {
-            vsnprintf(writef_buf, CM_WRITEF_MAXSIZE - 1, format, lst);
-            as_append_cstr(&c->writer_state.buf, writef_buf);
-            as_append_char(&c->writer_state.buf, '\n');
-        } break;
-    }
+    vsnprintf(writef_buf, CM_WRITEF_MAXSIZE - 1, format, lst);
+    as_append_cstr(&c->out, writef_buf);
+    as_append_char(&c->out, '\n');
 
     va_end(lst);
 }
@@ -172,7 +147,7 @@ static const char* PRIM_TYPE_TABLE[] = {
 };
 
 const char* type_string(CB_Type t) {
-    if (inrange(t, CB_PRIM_NULL, CB_PRIM_STRING))
+    if (t <= CB_PRIM_STRING)
         strcpy(type_string_buf, PRIM_TYPE_TABLE[t]);
     else
         snprintf(type_string_buf, TYPE_STRING_BUFSZ, "Type %u", (u32)t);

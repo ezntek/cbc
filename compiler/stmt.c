@@ -63,37 +63,45 @@ void cm_stmt(Compiler* c, CB_Stmt* s) {
     }
 }
 
-static void write_utils(Compiler* c) {
-    cm_write(c, "function $__PRINT_BOOLEAN(w %val) {\n"
-                "@start\n"
-                "%fp =l loadl $stdout\n"
-                "jnz %val, @t, @f\n"
-                "@t\n"
-                "call $fputs(l $__FTRUE, l %fp)\n"
-                "jmp @e\n"
-                "@f\n"
-                "call $fputs(l $__FFALSE, l %fp)\n"
-                "@e\n"
-                "ret\n"
-                "}\n");
+static inline void write_utils(Compiler* c) {
+    cm_writeln(c, "function $__PRINT_BOOLEAN(w %val) {\n"
+                  "@start\n"
+                  "%fp =l loadl $stdout\n"
+                  "jnz %val, @t, @f\n"
+                  "@t\n"
+                  "call $fputs(l $__FTRUE, l %fp)\n"
+                  "jmp @e\n"
+                  "@f\n"
+                  "call $fputs(l $__FFALSE, l %fp)\n"
+                  "@e\n"
+                  "ret\n"
+                  "}");
 }
 
-static void write_format_specifiers(Compiler* c) {
+static inline void write_format_specifiers(Compiler* c) {
     cm_writeln(c, "data $__FS = { b \"%s\", b 0 }\n"
                   "data $__FI = { b \"%li\", b 0 }\n"
                   "data $__FR = { b \"%g\", b 0 }\n"
                   "data $__FC = { b \"%c\", b 0 }\n"
                   "data $__FFALSE = { b \"FALSE\", b 0 }\n"
-                  "data $__FTRUE = { b \"TRUE\", b 0 }\n");
+                  "data $__FTRUE = { b \"TRUE\", b 0 }");
 }
 
 #define MAX_ERROR_COUNT 20
-bool cm_program(Compiler* c, CB_Program* prog, a_string* file_name) {
+bool cm_program(Compiler* c, a_string* out, CB_Program* prog,
+                a_string* file_name) {
     if (file_name)
         c->file_name = *file_name;
 
     write_utils(c);
+    write_format_specifiers(c);
+
     cm_writeln(c, "export function w $main() {\n@start");
+
+    a_string code = as_with_capacity(256);
+    a_string saved_out = c->out;
+    c->out = code;
+
     for (usize i = 0; i < prog->len; i++) {
         cm_stmt(c, &prog->stmts[i]);
 
@@ -103,6 +111,11 @@ bool cm_program(Compiler* c, CB_Program* prog, a_string* file_name) {
             return false;
         }
     }
+
+    // TODO: write variables
+
+    as_append_astr(&saved_out, &code);
+    c->out = saved_out;
 
     if (c->error_count) {
         cm_diag(c, BEGIN_POS, "errors were reported.");
@@ -118,7 +131,7 @@ bool cm_program(Compiler* c, CB_Program* prog, a_string* file_name) {
         cm_writeln(c, "\", b 0 }\n");
     }
 
-    write_format_specifiers(c);
+    *out = c->out;
 
     return true;
 }

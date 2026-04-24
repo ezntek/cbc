@@ -131,7 +131,6 @@ const char TYPE_TABLE[] = {
 
 Val cm_binary(Compiler* c, CB_Expr* e) {
     Val lhs = cm_expr(c, e->lhs), rhs = cm_expr(c, e->rhs);
-    Pos lhs_pos = e->lhs->pos, rhs_pos = e->rhs->pos;
 
     if (!lhs.have)
         goto fail;
