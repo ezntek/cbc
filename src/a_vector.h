@@ -1,21 +1,20 @@
 /*
  * a_string/a_vector: a scuffed dynamic vector/string implementation.
  *
- * Copyright (c) Eason Qin, 2025.
+ * Copyright (c) Eason Qin, 2025-2026.
  *
  * This source code form is licensed under the MIT/Expat license.
  * Visit the OSI website for a digital version.
  */
-#ifndef _A_VECTOR_H
-#define _A_VECTOR_H
+#ifndef A_VECTOR_H
+#define A_VECTOR_H
 
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 
-#define AV_INITIAL_SIZE  5
-#define AV_GROWTH_FACTOR 2
+#define AV_INITIAL_SIZE 4
 
 #define AV_DECL(T, name)                                                       \
     typedef struct {                                                           \
@@ -30,7 +29,7 @@
             if ((v)->cap == 0)                                                 \
                 (v)->cap = AV_INITIAL_SIZE;                                    \
             else                                                               \
-                (v)->cap *= AV_GROWTH_FACTOR;                                  \
+                (v)->cap += ((v)->cap >> 1);                                   \
             (v)->data = realloc((v)->data, sizeof(*(v)->data) * (v)->cap);     \
             check_alloc((v)->data);                                            \
         }                                                                      \
@@ -75,7 +74,7 @@
 
 #define av_at(v, pos) ((v)->data[(assert(0 <= pos && pos < (v)->len), pos)])
 
-#define av_pop(v, pos) ((v)->data[(assert((v)->len > 0), --(v)->len)])
+#define av_pop(v) ((v)->data[(assert((v)->len > 0), --(v)->len)])
 
 #define av_pop_many(v, count)                                                  \
     do {                                                                       \
@@ -83,4 +82,4 @@
         (v)->len -= count;                                                     \
     } while (0)
 
-#endif // _A_VECTOR_H
+#endif // A_VECTOR_H

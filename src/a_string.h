@@ -1,20 +1,29 @@
 /*
  * a_string/a_vector: a scuffed dynamic vector/string implementation.
  *
- * Copyright (c) Eason Qin, 2025.
+ * Copyright (c) Eason Qin, 2025-2026.
  *
  * This source code form is licensed under the MIT/Expat license.
  * Visit the OSI website for a digital version.
  */
-#ifndef _A_STRING_H
-#define _A_STRING_H
+#ifndef A_STRING_H
+#define A_STRING_H
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+#include "a_string_slice.h"
+#include "a_vector.h"
 #include "common.h"
+
+/// wide char
+typedef u16 wchar;
+
+/// double wide char
+typedef u32 dchar;
 
 #define as_fmt(s)  (int)((s).len), ((s).data)
 #define as_fmtp(s) (int)((s)->len), ((s)->data)
@@ -116,6 +125,11 @@ void as_reserve(a_string* s, usize cap);
 a_string as_from_cstr(const char* cstr);
 
 /**
+ * creates an a_string from an a_string_slice.
+ */
+a_string as_from_string_slice(a_string_slice slc);
+
+/**
  * creates an a_string from a C string.
  *
  * shorthand of `as_from_cstr()`
@@ -213,9 +227,9 @@ char* as_fgets(a_string* buf, usize cap, FILE* stream);
  *
  * @param buf the target buffer to write into, it can be either valid or invalid
  * @param stream the target file stream
- * @return true on success, and false on error
+ * @return invalid string on failure
  */
-bool as_read_line(a_string* buf, FILE* stream);
+a_string as_read_line(FILE* stream);
 
 /**
  * reads the entirety of a file into an a_string.
@@ -226,6 +240,7 @@ bool as_read_line(a_string* buf, FILE* stream);
  * Returns an invalid `a_string` upon error, and sets errno according to fopen.
  *
  * @param filename the name of the file.
+ * @return invalid string on failure
  */
 a_string as_read_file(const char* filename);
 
@@ -245,30 +260,6 @@ a_string as_input(const char* prompt);
  * @param s the string to be checked
  */
 bool as_valid(const a_string* s);
-
-/**
- * gets the nth character from an a_string.
- *
- * @param s the target string
- * @return the last character
- */
-char as_at(const a_string* s, usize idx);
-
-/**
- * gets the first character from an a_string.
- *
- * @param s the target string
- * @return the last character
- */
-char as_first(const a_string* s);
-
-/**
- * gets the last character from an a_string.
- *
- * @param s the target string
- * @return the last character
- */
-char as_last(const a_string* s);
 
 /**
  * adds 1 character to an a_string
@@ -312,6 +303,30 @@ void as_append(a_string* s, const char* n);
  * @return the last character
  */
 char as_pop(a_string* s);
+
+/**
+ * gets the nth character from an a_string.
+ *
+ * @param s the target string
+ * @return the last character
+ */
+char as_at(const a_string* s, usize idx);
+
+/**
+ * gets the first character from an a_string.
+ *
+ * @param s the target string
+ * @return the last character
+ */
+char as_first(const a_string* s);
+
+/**
+ * gets the last character from an a_string.
+ *
+ * @param s the target string
+ * @return the last character
+ */
+char as_last(const a_string* s);
 
 /**
  * removes all whitespace characters from the left side of an a_string.
@@ -490,15 +505,108 @@ usize as_to_double(const a_string* src, double* res);
  */
 usize as_to_integer(const a_string* src, int64_t* res, int base);
 
-bool as_is_upper(const a_string* s);
-bool as_is_lower(const a_string* s);
-bool as_is_case_consistent(const a_string* s);
+// === UNICODE (UTF-8) STUFF ===
 
-// NOT GUARANTEED TO BE NULL TERMINATED
-// NOT GUARANTEED TO BE OWNED
-typedef struct {
-    char* data;
-    usize len;
-} a_slice;
+// string of 32 bit unicode codepoints
+AV_DECL(dchar, a_dstring)
 
-#endif // _A_STRING_H
+/**
+ * counts how many UTF-8 codepoints are in an a_string
+ *
+ * @param s the string
+ * @return the number of UTF-8 characters there are
+ */
+usize au_len(const a_string* s);
+
+/**
+ * checks if a UTF-8 slice is valid.
+ * @param s the string
+ */
+bool au_slice_valid(const u8* s, usize len);
+
+/**
+ * checks if a UTF-8 a_string is valid.
+ *
+ * @param s the string
+ */
+bool au_valid(const a_string* s);
+
+/**
+ * (STATIC) decode a single unicode codepoint from the ptr to
+ * the leading byte. Assumes and asserts that the char is valid.
+ *
+ * @param ptr the pointer to the leading byte
+ * @return the char
+ */
+dchar au_decode(u8* ptr);
+
+/**
+ * (STATIC) encode a single UTF-32 codepoint into UTF-8.
+ *
+ * @param dest the destination array, 4 bytes long
+ * @param src the UTF-32 dchar
+ * @return the number of bytes used in the final encoding/
+ */
+u8 au_encode_cp(u8 dest[4], dchar src);
+
+/**
+ * returns the address of the nth UTF-8 codepoint in an a_string.
+ *
+ * @param s the string
+ * @param idx the index
+ * @return the address of the beginning of the codepoint
+ */
+u8* au_pos(const a_string* s, usize idx);
+
+#define au_iter(s, vname)                                                      \
+    for (u8* vname = au_next_begin((s), NULL); vname;                          \
+         vname = au_next_begin((s), vname))
+
+/**
+ * returns the next position of a UTF-8 codepoint given a beginning memory
+ * location within the bounds of the a_string buffer.
+ *
+ * This is useful for manually iterating over an a_string efficiently.
+ *
+ * @param s the string
+ * @param ptr the address, can be left NULL to assume the beginning of the
+ * string. Returns NULL on error/stop.
+ */
+u8* au_next_begin(const a_string* s, u8* begin);
+
+/**
+ * returns the next unicode character given a beginning memory location within
+ * the bounds of the a_string buffer.
+ *
+ * This is useful for manually iterating over an a_string efficiently.
+ *
+ * @param s the string
+ * @param ptr the address, can be left NULL to assume the beginning of the
+ * string.
+ * @return the char
+ */
+dchar au_next_codepoint(const a_string* s, u8* begin);
+
+/**
+ * returns the unicode character at the nth index of a UTF-8 a_string.
+ *
+ * @param s the string
+ * @param idx the index
+ * @return the decoded codepoint
+ */
+dchar au_at(const a_string* s, usize idx);
+
+/**
+ * returns an a_vector (heap dynamic array) of UTF-32 codepoints.
+ *
+ * @param s the string
+ * @return the new UTF-32 string (must be freed).
+ */
+a_dstring au_codepoints(const a_string* s);
+
+void au_append_char(a_string* s, dchar cp);
+
+// asserts slice is valid
+void au_append_slice(a_string* s, const u8* data, usize len);
+
+#endif // A_STRING_H

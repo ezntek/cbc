@@ -5,15 +5,9 @@
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+#ifndef CBC_UTIL_H
+#define CBC_UTIL_H
 
-#ifndef _UTIL_H
-#define _UTIL_H
-
-#endif // _UTIL_H
-
-#ifdef _UTIL_H_IMPLEMENTATION
-
-#undef _UTIL_H_IMPLEMENTATION
-#endif
+#endif // CBC_UTIL_H

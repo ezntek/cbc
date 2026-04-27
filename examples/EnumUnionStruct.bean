@@ -1,0 +1,30 @@
+enum FruitKind
+    // everything will be auto-initialized
+    Apple, 
+    Grape,
+    Orange <- 3,
+    // Apple: 0, Grape, 1, Orange: 3
+end
+
+struct Fruit
+    kind: FruitKind
+    price: real
+end
+
+var fruit: Fruit
+fruit.kind <- FruitKind.Apple
+fruit.price <- 6.9
+OUTPUT fruit // should generate a format at compile time 
+             // Fruit { kind: FruitKind.Apple, price: 6.9 }
+
+OUTPUT "the price is: ", fruit.price
+
+
+union Num
+    i: int,
+    f: real,
+end
+
+var u: Num
+u.i <- 1
+OUTPUT u.f // should output gibberish

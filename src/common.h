@@ -1,14 +1,14 @@
 /*
  * a_common.h: common declarations for C.
  *
- * Copyright (c) Eason Qin <eason@ezntek.com>, 2024-2025.
+ * Copyright (c) Eason Qin <eason@ezntek.com>, 2024-2026.
  *
  * This source code form is placed under CC0/Public domain. Whatever you wanna
  * do idk
  */
 
-#ifndef _COMMON_H
-#define _COMMON_H
+#ifndef CBC_COMMON_H
+#define CBC_COMMON_H
 
 #include <stddef.h>
 #include <stdint.h>

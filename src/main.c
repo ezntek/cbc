@@ -7,6 +7,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+#include "a_string_slice.h"
+#include "error.h"
+#include "lexer.h"
+#include "lexer_types.h"
 #define _POSIX_C_SOURCE 200809L
 #define _GNU_SOURCE
 
@@ -17,12 +21,7 @@
 
 #include "a_string.h"
 #include "a_vector.h"
-#include "ast.h"
-#include "ast_printer.h"
 #include "common.h"
-#include "compiler/compiler.h"
-#include "lexer.h"
-#include "parser/parser.h"
 
 #define _UTIL_H_IMPLEMENTATION
 #include "util.h"
@@ -103,18 +102,12 @@ void init(int argc, char** argv) {
 
 static a_string file_content;
 static a_string file_name;
-static Lexer l;
-static Tokens toks;
-static Parser ps;
-static CB_Program prog;
-static AstPrinter printer;
-static Compiler comp;
 
 void compile(void) {
     if (!args.has_in_path) {
         file_name = astr("(stdin)");
-        file_content = as_new();
-        if (!as_read_line(&file_content, stdin))
+        file_content = as_read_line(stdin);
+        if (!as_valid(&file_content))
             panic("could not read line from stdin");
     } else {
         file_name = astr(args.in_path.data);
@@ -123,61 +116,28 @@ void compile(void) {
             panic("file \"%s\" not found", args.in_path.data);
     }
 
-    l = lx_new(file_content.data, file_content.len);
+    a_string_slice src_view = ass_from_astr(file_content);
+    CBCLexer l = cbc_lexer_new(src_view);
+    CBCToken* tokens = NULL;
+    usize len = cbc_lexer_tokenize(&l, &tokens);
 
-    toks = (Tokens){0};
-    if (!lx_tokenize(&l, &toks))
-        return;
-
-    if (args.debug) {
-        eprintf("\x1b[2m=== TOKENS ===\n");
-        for (usize i = 0; i < toks.len; i++) {
-            token_print_long(&toks.data[i]);
-        }
-        eprintf("==============\x1b[0m\n");
-    }
-
-    ps = ps_new(toks.data, toks.len, as_dupe(&file_name));
-
-    if (!ps_program(&ps, &prog)) {
-        eprintf("error\n");
+    if (l.error.kind) {
+        cbc_error_print(&l.error, ass_from_astr(file_name));
+        cbc_error_free(&l.error);
         return;
     }
 
-    if (args.debug) {
-        printer = ap_new_with_stderr_writer();
-        ap_visit_program(&printer, &prog);
-        putchar('\n');
+    for (usize i = 0; i < len; i++) {
+        a_string_slice slc =
+            cbc_token_to_string_slice_full(&tokens[i], src_view);
+        printf("%.*s\n", as_fmt(slc));
     }
-
-    comp = cm_new();
-    a_string out = {0};
-    if (!cm_program(&comp, &out, &prog, &file_name))
-        return;
-
-    if (args.has_out_path) {
-        FILE* fp = fopen(args.out_path.data, "w");
-        fwrite(out.data, 1, out.len, fp);
-        fclose(fp);
-    } else {
-        printf("%.*s\n", as_fmt(out));
-    }
-
-    if (args.has_out_path)
-        eprintf("Compiled %.*s\n", as_fmt(args.in_path));
+    free(tokens);
 
     return;
 }
 
 void deinit(void) {
-    cm_free(&comp);
-    cb_program_free(&prog);
-    ps_free(&ps);
-    for (usize i = 0; i < toks.len; i++) {
-        token_free(&toks.data[i]);
-    }
-    av_free(&toks);
-    lx_free(&l);
     as_free(&file_content);
     as_free(&file_name);
 }
