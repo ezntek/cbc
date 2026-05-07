@@ -21,7 +21,7 @@
         T* data;                                                               \
         usize len;                                                             \
         usize cap;                                                             \
-    } name;
+    } name
 
 #define av_append(v, item)                                                     \
     do {                                                                       \

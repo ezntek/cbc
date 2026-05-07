@@ -1,3 +1,5 @@
+.build
+mate
 3rdparty/*
 .vscode
 *.o

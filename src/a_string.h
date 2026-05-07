@@ -508,7 +508,7 @@ usize as_to_integer(const a_string* src, int64_t* res, int base);
 // === UNICODE (UTF-8) STUFF ===
 
 // string of 32 bit unicode codepoints
-AV_DECL(dchar, a_dstring)
+AV_DECL(dchar, a_dstring);
 
 /**
  * counts how many UTF-8 codepoints are in an a_string

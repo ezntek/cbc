@@ -38,6 +38,6 @@ void cbc_lexer_reset(CBCLexer* l);
 CBCToken* cbc_lexer_next_token(CBCLexer* l);
 
 // returns length of out buf
-usize cbc_lexer_tokenize(CBCLexer* l, CBCToken** out);
+usize cbc_lexer_tokenize(CBCLexer* l, CBCToken** out, a_string_slice file_name);
 
 #endif // CBC_LEXER_H

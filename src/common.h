@@ -73,12 +73,12 @@ typedef double f64;
 
 #define eprintf(...) fprintf(stderr, __VA_ARGS__);
 
-#ifdef _A_STRING_DEBUG
+#ifdef CBC_DEBUG
 #define panic(...)                                                             \
     do {                                                                       \
         eprintf("\033[31;1mpanic:\033[0m line %d, func \"%s\" in file "        \
                 "\"%s\": ",                                                    \
-                __LINE__, __func__, __FILE__);                                 \
+                __LINE__, __func__, __FILE_NAME__);                            \
         eprintf(__VA_ARGS__);                                                  \
         eprintf("\n");                                                         \
         *(int*)0 = 0;                                                          \
@@ -87,9 +87,9 @@ typedef double f64;
 #else
 #define panic(...)                                                             \
     do {                                                                       \
-        eprintf("\033[31;1mpanic:\033[0m line %d, func \"%s\" in file "        \
-                "\"%s\": ",                                                    \
-                __LINE__, __func__, __FILE__);                                 \
+        eprintf(S_BOLD S_RED "panic:" S_END " line %d, func \"%s\" in file "   \
+                             "\"%s\": ",                                       \
+                __LINE__, __func__, __FILE_NAME__);                            \
         eprintf(__VA_ARGS__);                                                  \
         eprintf("\n");                                                         \
         exit(1);                                                               \
@@ -101,34 +101,22 @@ typedef double f64;
 #endif
 #define unreachable panic("reached unreachable code")
 
-#define fatal_noexit(...)                                                      \
-    do {                                                                       \
-        eprintf(S_RED S_BOLD "[fatal] " S_END);                                \
-        eprintf(S_DIM);                                                        \
-        eprintf(__VA_ARGS__);                                                  \
-        eprintf(S_END "\n");                                                   \
-    } while (0)
-
-#define fatal(...)                                                             \
-    do {                                                                       \
-        fatal_noexit(__VA_ARGS__);                                             \
-        exit(1);                                                               \
-    } while (0);
-
 #define warn(...)                                                              \
     do {                                                                       \
-        eprintf(S_MAGENTA S_BOLD "[warn] " S_END);                             \
-        eprintf(S_DIM);                                                        \
+        eprintf(S_BOLD S_YELLOW "warn:" S_END " line %d, func \"%s\" in file " \
+                                "\"%s\": ",                                    \
+                __LINE__, __func__, __FILE_NAME__);                            \
         eprintf(__VA_ARGS__);                                                  \
-        eprintf(S_END "\n");                                                   \
+        eprintf("\n");                                                         \
     } while (0)
 
 #define info(...)                                                              \
     do {                                                                       \
-        eprintf(S_CYAN S_BOLD "[info] " S_END);                                \
-        eprintf(S_DIM);                                                        \
+        eprintf(S_BOLD S_CYAN "info:" S_END " line %d, func \"%s\" in file "   \
+                              "\"%s\": ",                                      \
+                __LINE__, __func__, __FILE_NAME__);                            \
         eprintf(__VA_ARGS__);                                                  \
-        eprintf(S_END "\n");                                                   \
+        eprintf("\n");                                                         \
     } while (0)
 
 // duplicates a value onto a new heap variable

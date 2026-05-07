@@ -19,7 +19,7 @@
 #include "lexer.h"
 #include "lexer_types.h"
 
-AV_DECL(CBCToken, Tokens)
+AV_DECL(CBCToken, Tokens);
 
 #define CUR       (l->src[l->cur])
 #define IN_BOUNDS (l->cur < l->src_len)
@@ -267,14 +267,15 @@ static void trim_comments(CBCLexer* l) {
     if (!strncmp(&CUR, "/*", 2)) {
         l->cur += 2;
 
-        while (IN_BOUNDS && strncmp(&CUR, "/*", 2)) {
+        while (IN_BOUNDS && strncmp(&CUR, "*/", 2)) {
             if (CUR == '\n')
                 BUMP_NEWLINE;
             else
                 l->cur++;
         }
 
-        l->cur++;
+        // skip past
+        l->cur += 2;
         trim_spaces(l);
     } else if (!strncmp(&CUR, "//", 2) || !strncmp(&CUR, "#!", 2)) {
         l->cur += 2;
@@ -378,15 +379,14 @@ static bool next_word(CBCLexer* l, a_string_slice* out) {
             break;
 
         cur = CUR;
-        stop = (
-            // this one if it's delimited
-            (is_delimited && (cur == first || cur == '\n')) ||
-            // else do this
-            (is_operator_start(l, &CUR) ||
-             // if it could be a number and it's a dot, treat it as a
-             // decimal
-             (is_separator(cur) && !(cur == '.' && maybe_number)) ||
-             isspace(cur) || strchr(DELIMS, cur)));
+        if (is_delimited)
+            stop = (cur == first || cur == '\n');
+        else
+            stop = (is_operator_start(l, &CUR) ||
+                    // if it could be a number and it's a dot, treat it as a
+                    // decimal
+                    (is_separator(cur) && !(cur == '.' && maybe_number)) ||
+                    isspace(cur) || strchr(DELIMS, cur));
 
         if (cur == '\\') {
             len++;
@@ -566,6 +566,16 @@ void cbc_lexer_reset(CBCLexer* l) {
 }
 
 CBCToken* cbc_lexer_next_token(CBCLexer* l) {
+    l->token = (CBCToken){0};
+
+    if (l->error.kind != CBC_ERROR_BOGUS) {
+        l->error = (CBCError){0};
+        while (IN_BOUNDS && !isspace(CUR) && !is_operator_start(l, &CUR) &&
+               !is_separator(CUR) && !strchr("\"'", CUR))
+            l->cur++;
+        // optimistically tokenize
+    }
+
     trim_spaces(l);
 
     if (!IN_BOUNDS) {
@@ -604,7 +614,8 @@ CBCToken* cbc_lexer_next_token(CBCLexer* l) {
     return NULL;
 }
 
-usize cbc_lexer_tokenize(CBCLexer* l, CBCToken** out) {
+usize cbc_lexer_tokenize(CBCLexer* l, CBCToken** out,
+                         a_string_slice file_name) {
     Tokens res = {0};
     CBCToken* tok = NULL;
 
@@ -612,11 +623,11 @@ usize cbc_lexer_tokenize(CBCLexer* l, CBCToken** out) {
 
     do {
         tok = cbc_lexer_next_token(l);
+
         if (!tok) {
-            *out = NULL;
-            if (res.cap)
-                av_free(&res);
-            return 0;
+            cbc_error_print(&l->error, file_name, .src = l->src, .f = stderr);
+            cbc_error_free(&l->error);
+            continue;
         }
 
         av_append(&res, *tok);

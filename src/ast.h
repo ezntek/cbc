@@ -11,6 +11,7 @@
 #define CBC_AST_H
 
 #include "a_string_slice.h"
+#include "a_vector.h"
 #include "common.h"
 
 typedef enum {
@@ -31,9 +32,18 @@ typedef enum {
     // >=0x10: custom types
 } CBCAst_PrimitiveType;
 
+// <0x10: primitive types
+// >=10: custom types
+typedef u32 CBCAst_TypeId;
+
+typedef u32 CBCAst_ExprId;
+typedef u32 CBCAst_LiteralId;
+typedef u32 CBCAst_StringId;
+typedef u32 CBCAst_ArrayLiteralId;
+
 typedef struct {
     const a_string_slice* names;
-    const u32* types;
+    const CBCAst_TypeId* types;
     u32 field_count;
 } CBCAst_StructType;
 
@@ -41,15 +51,14 @@ void cbc_ast_struct_type_free(CBCAst_StructType* t);
 
 typedef struct {
     const a_string_slice* variants;
-    // TODO: figure out how to deduce final size of enum
     const struct CBCAst_Literal* items;
-    CBCAst_PrimitiveType variant_type;
     u32 variant_count;
+    u8 size; // size in bytes
 } CBCAst_EnumType;
 
 typedef struct {
     const a_string_slice* names;
-    const u32* types;
+    const CBCAst_TypeId* types;
     u32 field_count;
 } CBCAst_UnionType;
 
@@ -73,14 +82,17 @@ typedef struct CBCAst_Literal {
     union {
         i64 i;
         double real;
-        u8 c;          // BOOLEANs, CHARs,
-        u32 string_id; // index into array of owned slices
-        u32 array_id;  // index into array of CBCAst_ArrayLiterals
+        u8 c; // BOOLEANs, CHARs,
+        CBCAst_StringId
+            string_id; // index into array of owned slices (StringStorage)
+        CBCAst_ArrayLiteralId
+            array_id; // index into array of CBCAst_ArrayLiterals
     } v;
 } CBCAst_Literal;
 
 typedef struct {
-
+    CBCAst_PrimitiveType t;
+    CBCAst_ExprId expr_id;
 } CBCAst_Typecast;
 
 typedef enum {
@@ -123,12 +135,12 @@ typedef struct {
     CBCAst_ExprKind kind;
     union {
         // index into LiteralStorage
-        u32 literal_id;
+        CBCAst_LiteralId literal_id;
         // index into StringStorage
-        u32 ident_id;
+        CBCAst_StringId ident_id;
         // index into ExprStorage
         // only use lhs_id for unaries
-        u32 lhs_id, rhs_id; // for binaryexprs
+        CBCAst_ExprId lhs_id, rhs_id; // for binaryexprs
         CBCAst_Typecast tc;
     } v;
 } CBCAst_Expr;
@@ -141,7 +153,7 @@ typedef enum {
 typedef struct {
     CBCAst_StmtKind kind;
     union {
-        u32 expr_id;
+        CBCAst_ExprId expr_id;
     } v;
 } CBCAst_Stmt;
 
@@ -150,12 +162,20 @@ typedef struct {
     usize len;
 } CBCAst_Program;
 
-// NOTE: Opaque struct.
-// Keep this alive as long as you use the AST. this contains metadata and string
-// storage for exprs and such.
-typedef struct CBCAst CBCAst;
+// Private structs, do not touch
+AV_DECL(CBCAst_Expr, CBCAst__ExprStorage);
+AV_DECL(a_string_slice, CBCAst__StringStorage);
+AV_DECL(CBCAst_Literal, CBCAst__LiteralStorage);
+AV_DECL(CBCAst_ArrayLiteral, CBCAst__ArrayLiteralStorage);
 
-CBCAst_Program cbc_ast_get_program(CBCAst* ast);
+typedef struct CBCAst {
+    CBCAst_Program prog;
+    CBCAst__ExprStorage exprs;
+    CBCAst__StringStorage strings;
+    CBCAst__LiteralStorage literals;
+    CBCAst__ArrayLiteralStorage array_literals;
+} CBCAst;
+
 void cbc_ast_free(CBCAst* ast);
 
 #endif

@@ -87,7 +87,7 @@ bool parse_args(int argc, char** argv) {
     if (optind < argc) {
         args.in_path = astr(argv[optind]);
         if (args.in_path.len == 0)
-            fatal("no input file provided");
+            panic("no input file provided");
         args.has_in_path = true;
     }
 
@@ -107,8 +107,10 @@ void compile(void) {
     if (!args.has_in_path) {
         file_name = astr("(stdin)");
         file_content = as_read_line(stdin);
-        if (!as_valid(&file_content))
+        if (!as_valid(&file_content)) {
+            as_free(&file_name);
             panic("could not read line from stdin");
+        }
     } else {
         file_name = astr(args.in_path.data);
         file_content = as_read_file(args.in_path.data);
@@ -119,12 +121,11 @@ void compile(void) {
     a_string_slice src_view = ass_from_astr(file_content);
     CBCLexer l = cbc_lexer_new(src_view);
     CBCToken* tokens = NULL;
-    usize len = cbc_lexer_tokenize(&l, &tokens);
+    usize len = cbc_lexer_tokenize(&l, &tokens, ass_from_astr(file_name));
 
     if (l.error.kind) {
-        cbc_error_print(&l.error, ass_from_astr(file_name));
-        cbc_error_free(&l.error);
-        return;
+        eprintf("error occurred while tokenizing\n");
+        free(tokens);
     }
 
     for (usize i = 0; i < len; i++) {

@@ -17,7 +17,8 @@
 #include "lexer_types.h"
 
 typedef enum {
-    CBC_ERROR_EOF = 0,
+    CBC_ERROR_BOGUS = 0,
+    CBC_ERROR_EOF,
     CBC_ERROR_SYNTAX,
     CBC_ERROR_RUNTIME,
 } CBCErrorKind;
@@ -31,7 +32,8 @@ typedef struct {
     a_string msg; // rows delimited by 0xA
 } CBCError;
 
-CBCError cbc_error_new(CBCErrorKind k, CBCPos p, a_string msg);
+CBCError cbc_error_new(CBCErrorKind k, CBCPos p);
+CBCError cbc_error_new_astr(CBCErrorKind k, CBCPos p, a_string msg);
 CBCError cbc_error_new_cstr(CBCErrorKind k, CBCPos p, const char* msg);
 CBCError cbc_error_new_string_slice(CBCErrorKind k, CBCPos p,
                                     a_string_slice msg);
@@ -44,9 +46,9 @@ struct __cbc_error_print_opts {
 };
 
 // void cbc_error_print(CBCError* err, a_string_slice file_name, ...)
-#define cbc_error_print(err, ...)                                              \
-    __cbc_error_print_impl(                                                    \
-        (err), (struct __cbc_error_print_opts){.file_name = __VA_ARGS__})
+#define cbc_error_print(err, fname, ...)                                       \
+    __cbc_error_print_impl((err), (struct __cbc_error_print_opts){             \
+                                      .file_name = fname, __VA_ARGS__})
 
 void __cbc_error_print_impl(CBCError* err, struct __cbc_error_print_opts opts);
 

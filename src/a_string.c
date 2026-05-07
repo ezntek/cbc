@@ -228,8 +228,10 @@ char* as_fgets(a_string* restrict buf, usize cap, FILE* restrict stream) {
         *buf = as_with_capacity(actual_cap);
     }
     char* fgets_res = fgets(buf->data, actual_cap, stream);
-    if (fgets_res == NULL)
+    if (fgets_res == NULL) {
+        as_free(buf);
         return NULL;
+    }
     buf->len = strlen(buf->data);
     buf->data[buf->len] = 0;
     return buf->data;

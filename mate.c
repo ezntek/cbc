@@ -31,13 +31,9 @@
         abort();                                                               \
     }
 
-int main(void) {
-#ifdef DEBUG
-    fprintf(stderr, "compiling with debug flags\n");
-#else
-    fprintf(stderr, "compiling with release flags\n");
-#endif
+// ===== actual source code/building logic goes here =====
 
+static void build(void) {
     CreateConfig(
         (MateOptions){.compiler = COMPILER, .buildDirectory = ".build"});
     StartBuild();
@@ -49,4 +45,18 @@ int main(void) {
     InstallExecutable(exec);
 
     EndBuild();
+}
+
+int main(int argc, char** argv) {
+#ifdef DEBUG
+    fprintf(stderr, "compiling with debug flags\n");
+#else
+    fprintf(stderr, "compiling with release flags\n");
+#endif
+
+    argc--;
+    argv++;
+
+    if (argc == 0)
+        build();
 }

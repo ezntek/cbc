@@ -13,19 +13,6 @@
 #include "a_string_slice.h"
 #include "a_vector.h"
 
-AV_DECL(CBCAst_Expr, ExprStorage);
-AV_DECL(a_string_slice, StringStorage);
-AV_DECL(CBCAst_Literal, LiteralStorage);
-AV_DECL(CBCAst_ArrayLiteral, ArrayLiteralStorage);
-
-typedef struct CBCAst {
-    CBCAst_Program prog;
-    ExprStorage exprs;
-    StringStorage strings;
-    LiteralStorage literals;
-    ArrayLiteralStorage array_literals;
-} CBCAst;
-
 void cbc_ast_free(CBCAst* ast) {
     for (usize i = 0; i < ast->strings.len; i++) {
         // This slice is owned.
