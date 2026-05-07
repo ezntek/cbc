@@ -142,8 +142,6 @@ typedef struct {
     u32 src_index;
 } CBCToken;
 
-AV_DECL(CBCToken, CBCTokenArray)
-
 // on every call, the result of the previous call is destroyed as we use one
 // static buffer
 a_string_slice cbc_token_to_string_slice(const CBCToken* t);

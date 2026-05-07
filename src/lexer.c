@@ -378,14 +378,15 @@ static bool next_word(CBCLexer* l, a_string_slice* out) {
             break;
 
         cur = CUR;
-        if (is_delimited)
-            stop = (cur == first || cur == '\n');
-        else
-            stop = (is_operator_start(l, &CUR) ||
-                    // if it could be a number and it's a dot, treat it as a
-                    // decimal
-                    (is_separator(cur) && !(cur == '.' && maybe_number)) ||
-                    isspace(cur) || strchr(DELIMS, cur));
+        stop = (
+            // this one if it's delimited
+            (is_delimited && (cur == first || cur == '\n')) ||
+            // else do this
+            (is_operator_start(l, &CUR) ||
+             // if it could be a number and it's a dot, treat it as a
+             // decimal
+             (is_separator(cur) && !(cur == '.' && maybe_number)) ||
+             isspace(cur) || strchr(DELIMS, cur)));
 
         if (cur == '\\') {
             len++;
